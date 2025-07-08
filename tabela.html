@@ -143,31 +143,28 @@
         Despesas: R$ <span id="total-saida">0</span> |
         Saldo: R$ <span id="saldo">0</span>
       </div>
+  <button onclick="adicionarLinha()">➕ Adicionar Lançamento</button>
+  <button onclick="baixarCSV()">⬇️ Baixar CSV</button>
+  <button onclick="document.getElementById('importar-csv').click()">📤 Importar CSV</button>
+  <input type="file" id="importar-csv" accept=".csv" style="display: none" onchange="importarCSV(event)">
 
-      <button onclick="adicionarLinha()">➕ Adicionar Lançamento</button>
-      <button onclick="baixarCSV()">⬇️ Baixar CSV</button>
-      <button onclick="document.getElementById('importar-csv').click()">📤 Importar CSV</button>
-      <input type="file" id="importar-csv" accept=".csv" style="display: none" onchange="importarCSV(event)">
-
-      <table id="tabela-financeira">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Descrição</th>
-            <th>Categoria</th>
-            <th>Tipo</th>
-            <th>Valor (R$)</th>
-            <th>Despesas</th>
-            <th>Movimento</th>
-            <th>Data de Pagamento</th>
-            <th>Pendência</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </main>
-  </div>
+  <table id="tabela-financeira">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Descrição</th>
+        <th>Categoria</th>
+        <th>Tipo</th>
+        <th>Valor (R$)</th>
+        <th>Despesas</th>
+        <th>Movimento</th>
+        <th>Data de Pagamento</th>
+        <th>Pendência</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
   <div class="legenda">
     <strong>Legenda:</strong><br>
@@ -207,7 +204,6 @@
       const tdAcoes = tr.querySelector("td:last-child");
       tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
       salvarDados();
-      atualizarTotais();
     }
 
     function editarLinha(botao) {
@@ -225,7 +221,6 @@
       const tr = botao.parentElement.parentElement;
       tr.remove();
       salvarDados();
-      atualizarTotais();
     }
 
     function salvarDados() {
@@ -244,7 +239,85 @@
     function carregarDados() {
       const dados = JSON.parse(localStorage.getItem("dados_tabela")) || [];
       const tbody = document.querySelector("#tabela-financeira tbody");
+      tbody.innerHTML = "";
+      dados.forEach((linha) => {
+        const tr = document.createElement("tr");
+        linha.forEach((valor) => {
+          const td = document.createElement("td");
+          td.textContent = valor;
+          tr.appendChild(td);
+        });
+        const tdAcoes = document.createElement("td");
+        tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
+        tr.appendChild(tdAcoes);
+        tbody.appendChild(tr);
+      });
     }
-</script>
-</body>
-</html>
+
+    function baixarCSV() {
+      const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
+      if (linhas.length === 0) {
+        alert("Nenhum dado para exportar.");
+        return;
+      }
+
+      const cabecalho = ["Data", "Descrição", "Categoria", "Tipo", "Valor (R$)", "Despesas", "Movimento", "Data de Pagamento", "Pendência"];
+      let csv = cabecalho.join(",") + "\n";
+
+      linhas.forEach((tr) => {
+        const valores = [];
+        for (let i = 0; i < 9; i++) {
+          let texto = tr.children[i].textContent || "";
+          texto = texto.replace(/"/g, '""'); // escapa aspas
+          valores.push(`"${texto}"`);
+        }
+        csv += valores.join(",") + "\n";
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "lancamentos.csv");
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function importarCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const conteudo = e.target.result;
+        const linhas = conteudo.split("\n").filter(l => l.trim() !== "");
+        linhas.shift(); // remove o cabeçalho
+        const dados = linhas.map(linha => {
+          return linha.split(",").map(campo => campo.replace(/^"|"$/g, "").replace(/""/g, '"'));
+        });
+
+        const tbody = document.querySelector("#tabela-financeira tbody");
+        dados.forEach((linha) => {
+          if (linha.length === 0) return;
+          const tr = document.createElement("tr");
+          linha.forEach((valor) => {
+            const td = document.createElement("td");
+            td.textContent = valor;
+            tr.appendChild(td);
+          });
+          const tdAcoes = document.createElement("td");
+          tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
+          tr.appendChild(tdAcoes);
+          tbody.appendChild(tr);
+        });
+
+        salvarDados();
+      };
+      reader.readAsText(file);
+    }
+  </script>
+  </body>
+  </html>
