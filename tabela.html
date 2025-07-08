@@ -185,71 +185,167 @@
     <b>Pendência</b>: Se está pendente ou não
   </div>
 
-  <script>
-    function adicionarLinha() {
-      const tbody = document.querySelector("#tabela-financeira tbody");
+<script>
+  function adicionarLinha() {
+    const tbody = document.querySelector("#tabela-financeira tbody");
+    const tr = document.createElement("tr");
+    for (let i = 0; i < 9; i++) {
+      const td = document.createElement("td");
+      td.innerHTML = '<input type="text">';
+      tr.appendChild(td);
+    }
+    const tdAcoes = document.createElement("td");
+    tdAcoes.innerHTML = '<button onclick="salvarLinha(this)">Salvar</button>';
+    tr.appendChild(tdAcoes);
+    tbody.appendChild(tr);
+  }
+
+  function salvarLinha(botao) {
+    const tr = botao.parentElement.parentElement;
+    const inputs = tr.querySelectorAll("input");
+    inputs.forEach((input) => {
+      const td = input.parentElement;
+      td.textContent = input.value;
+    });
+    const tdAcoes = tr.querySelector("td:last-child");
+    tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
+    salvarDados();
+    atualizarTotais();
+  }
+
+  function editarLinha(botao) {
+    const tr = botao.parentElement.parentElement;
+    for (let i = 0; i < 9; i++) {
+      const td = tr.children[i];
+      const valor = td.textContent;
+      td.innerHTML = `<input type="text" value="${valor}">`;
+    }
+    const tdAcoes = tr.querySelector("td:last-child");
+    tdAcoes.innerHTML = '<button onclick="salvarLinha(this)">Salvar</button>';
+  }
+
+  function removerLinha(botao) {
+    const tr = botao.parentElement.parentElement;
+    tr.remove();
+    salvarDados();
+    atualizarTotais();
+  }
+
+  function salvarDados() {
+    const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
+    const dados = [];
+    linhas.forEach((tr) => {
+      const valores = [];
+      tr.querySelectorAll("td").forEach((td, i) => {
+        if (i < 9) valores.push(td.textContent);
+      });
+      dados.push(valores);
+    });
+    localStorage.setItem("dados_tabela", JSON.stringify(dados));
+  }
+
+  function carregarDados() {
+    const dados = JSON.parse(localStorage.getItem("dados_tabela")) || [];
+    const tbody = document.querySelector("#tabela-financeira tbody");
+    tbody.innerHTML = "";
+
+    dados.forEach((linha) => {
       const tr = document.createElement("tr");
-      for (let i = 0; i < 9; i++) {
+      linha.forEach((valor, i) => {
         const td = document.createElement("td");
-        td.innerHTML = '<input type="text">';
+        if (i === 4) {
+          const tipo = linha[3].toLowerCase();
+          td.textContent = valor;
+          td.className = tipo === "entrada" ? "entrada" : (tipo === "saída" || tipo === "saida" ? "saida" : "");
+        } else {
+          td.textContent = valor;
+        }
         tr.appendChild(td);
-      }
+      });
       const tdAcoes = document.createElement("td");
-      tdAcoes.innerHTML = '<button onclick="salvarLinha(this)">Salvar</button>';
+      tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
       tr.appendChild(tdAcoes);
       tbody.appendChild(tr);
-    }
+    });
 
-    function salvarLinha(botao) {
-      const tr = botao.parentElement.parentElement;
-      const inputs = tr.querySelectorAll("input");
-      inputs.forEach((input) => {
-        const td = input.parentElement;
-        td.textContent = input.value;
-      });
-      const tdAcoes = tr.querySelector("td:last-child");
-      tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
-      salvarDados();
-      atualizarTotais();
-    }
+    atualizarTotais();
+  }
 
-    function editarLinha(botao) {
-      const tr = botao.parentElement.parentElement;
-      for (let i = 0; i < 9; i++) {
-        const td = tr.children[i];
-        const valor = td.textContent;
-        td.innerHTML = `<input type="text" value="${valor}">`;
+  function atualizarTotais() {
+    const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
+    let totalEntradas = 0;
+    let totalSaidas = 0;
+
+    linhas.forEach(tr => {
+      const tipo = tr.children[3].textContent.toLowerCase();
+      const valorStr = tr.children[4].textContent.replace("R$", "").replace(",", ".").trim();
+      const valor = parseFloat(valorStr) || 0;
+
+      if (tipo === "entrada") {
+        totalEntradas += valor;
+      } else if (tipo === "saída" || tipo === "saida") {
+        totalSaidas += valor;
       }
-      const tdAcoes = tr.querySelector("td:last-child");
-      tdAcoes.innerHTML = '<button onclick="salvarLinha(this)">Salvar</button>';
+    });
+
+    const saldo = totalEntradas - totalSaidas;
+
+    const formatadoEntrada = totalEntradas.toFixed(2).replace(".", ",");
+    const formatadoSaida = totalSaidas.toFixed(2).replace(".", ",");
+    const formatadoSaldo = saldo.toFixed(2).replace(".", ",");
+
+    document.getElementById("total-entrada").textContent = formatadoEntrada;
+    document.getElementById("total-saida").textContent = formatadoSaida;
+    document.getElementById("saldo").textContent = formatadoSaldo;
+  }
+
+  function baixarCSV() {
+    const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
+    if (linhas.length === 0) {
+      alert("Nenhum dado para exportar.");
+      return;
     }
 
-    function removerLinha(botao) {
-      const tr = botao.parentElement.parentElement;
-      tr.remove();
-      salvarDados();
-      atualizarTotais();
-    }
+    const cabecalho = ["Data", "Descrição", "Categoria", "Tipo", "Valor (R$)", "Despesas", "Movimento", "Data de Pagamento", "Pendência"];
+    let csv = cabecalho.join(",") + "\n";
 
-    function salvarDados() {
-      const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
-      const dados = [];
-      linhas.forEach((tr) => {
-        const valores = [];
-        tr.querySelectorAll("td").forEach((td, i) => {
-          if (i < 9) valores.push(td.textContent);
-        });
-        dados.push(valores);
+    linhas.forEach((tr) => {
+      const valores = [];
+      for (let i = 0; i < 9; i++) {
+        let texto = tr.children[i].textContent || "";
+        texto = texto.replace(/"/g, '""');
+        valores.push(`"${texto}"`);
+      }
+      csv += valores.join(",") + "\n";
+    });
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "lancamentos.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function importarCSV(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const conteudo = e.target.result;
+      const linhas = conteudo.split("\n").filter(l => l.trim() !== "");
+      linhas.shift(); // remove cabeçalho
+
+      const dados = linhas.map(linha => {
+        return linha.split(",").map(campo => campo.replace(/^"|"$/g, "").replace(/""/g, '"'));
       });
-      localStorage.setItem("dados_tabela", JSON.stringify(dados));
-    }
 
-    function carregarDados() {
-      const dados = JSON.parse(localStorage.getItem("dados_tabela")) || [];
       const tbody = document.querySelector("#tabela-financeira tbody");
-      tbody.innerHTML = "";
-
       dados.forEach((linha) => {
+        if (linha.length === 0) return;
         const tr = document.createElement("tr");
         linha.forEach((valor, i) => {
           const td = document.createElement("td");
@@ -268,114 +364,14 @@
         tbody.appendChild(tr);
       });
 
+      salvarDados();
       atualizarTotais();
-    }
+    };
+    reader.readAsText(file);
+  }
 
-    function atualizarTotais() {
-      const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
-      let totalEntradas = 0;
-      let totalSaidas = 0;
-
-      linhas.forEach(tr => {
-        const tipo = tr.children[3].textContent.toLowerCase();
-        const valorStr = tr.children[4].textContent.replace("R$", "").replace(",", ".").trim();
-        const valor = parseFloat(valorStr) || 0;
-
-        if (tipo === "entrada") {
-          totalEntradas += valor;
-        } else if (tipo === "saída" || tipo === "saida") {
-          totalSaidas += valor;
-        }
-      });
-
-      const saldo = totalEntradas - totalSaidas;
-
- const formatadoEntrada = totalEntradas.toFixed(2).replace(".", ",");
-const formatadoSaida = totalSaidas.toFixed(2).replace(".", ",");
-const formatadoSaldo = saldo.toFixed(2).replace(".", ",");
-
-// Atualiza a área no topo (totals)
-document.getElementById("total-entrada").textContent = formatadoEntrada;
-document.getElementById("total-saida").textContent = formatadoSaida;
-document.getElementById("saldo").textContent = formatadoSaldo;
-
-// Atualiza também a área "resumo", se quiser manter
-document.getElementById("resumo").innerHTML = `
-  Total de Entradas: R$ ${formatadoEntrada}<br>
-  Total de Saídas: R$ ${formatadoSaida}<br>
-  Saldo: R$ ${formatadoSaldo}
-`;
-
-    function baixarCSV() {
-      const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
-      if (linhas.length === 0) {
-        alert("Nenhum dado para exportar.");
-        return;
-      }
-
-      const cabecalho = ["Data", "Descrição", "Categoria", "Tipo", "Valor (R$)", "Despesas", "Movimento", "Data de Pagamento", "Pendência"];
-      let csv = cabecalho.join(",") + "\n";
-
-      linhas.forEach((tr) => {
-        const valores = [];
-        for (let i = 0; i < 9; i++) {
-          let texto = tr.children[i].textContent || "";
-          texto = texto.replace(/"/g, '""');
-          valores.push(`"${texto}"`);
-        }
-        csv += valores.join(",") + "\n";
-      });
-
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", "lancamentos.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    function importarCSV(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const conteudo = e.target.result;
-        const linhas = conteudo.split("\n").filter(l => l.trim() !== "");
-        linhas.shift(); // remove cabeçalho
-
-        const dados = linhas.map(linha => {
-          return linha.split(",").map(campo => campo.replace(/^"|"$/g, "").replace(/""/g, '"'));
-        });
-
-        const tbody = document.querySelector("#tabela-financeira tbody");
-        dados.forEach((linha) => {
-          if (linha.length === 0) return;
-          const tr = document.createElement("tr");
-          linha.forEach((valor, i) => {
-            const td = document.createElement("td");
-            if (i === 4) {
-              const tipo = linha[3].toLowerCase();
-              td.textContent = valor;
-              td.className = tipo === "entrada" ? "entrada" : (tipo === "saída" || tipo === "saida" ? "saida" : "");
-            } else {
-              td.textContent = valor;
-            }
-            tr.appendChild(td);
-          });
-          const tdAcoes = document.createElement("td");
-          tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
-          tr.appendChild(tdAcoes);
-          tbody.appendChild(tr);
-        });
-
-        salvarDados();
-        atualizarTotais();
-      };
-      reader.readAsText(file);
-    }
-  </script>
+  // Carrega dados automaticamente ao iniciar
+  window.onload = carregarDados;
+</script>
 </body>
 </html>
