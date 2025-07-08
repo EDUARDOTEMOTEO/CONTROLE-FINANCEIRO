@@ -143,7 +143,7 @@
         Despesas: R$ <span id="total-saida">0</span> |
         Saldo: R$ <span id="saldo">0</span>
       </div>
-  <button onclick="adicionarLinha()">➕ Adicionar Lançamento</button>
+   <button onclick="adicionarLinha()">➕ Adicionar Lançamento</button>
   <button onclick="baixarCSV()">⬇️ Baixar CSV</button>
   <button onclick="document.getElementById('importar-csv').click()">📤 Importar CSV</button>
   <input type="file" id="importar-csv" accept=".csv" style="display: none" onchange="importarCSV(event)">
@@ -165,6 +165,12 @@
     </thead>
     <tbody></tbody>
   </table>
+
+  <div class="totais" id="resumo">
+    Total de Entradas: R$ 0,00<br>
+    Total de Saídas: R$ 0,00<br>
+    Saldo: R$ 0,00
+  </div>
 
   <div class="legenda">
     <strong>Legenda:</strong><br>
@@ -204,6 +210,7 @@
       const tdAcoes = tr.querySelector("td:last-child");
       tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
       salvarDados();
+      atualizarTotais();
     }
 
     function editarLinha(botao) {
@@ -221,6 +228,7 @@
       const tr = botao.parentElement.parentElement;
       tr.remove();
       salvarDados();
+      atualizarTotais();
     }
 
     function salvarDados() {
@@ -240,11 +248,18 @@
       const dados = JSON.parse(localStorage.getItem("dados_tabela")) || [];
       const tbody = document.querySelector("#tabela-financeira tbody");
       tbody.innerHTML = "";
+
       dados.forEach((linha) => {
         const tr = document.createElement("tr");
-        linha.forEach((valor) => {
+        linha.forEach((valor, i) => {
           const td = document.createElement("td");
-          td.textContent = valor;
+          if (i === 4) {
+            const tipo = linha[3].toLowerCase();
+            td.textContent = valor;
+            td.className = tipo === "entrada" ? "entrada" : (tipo === "saída" || tipo === "saida" ? "saida" : "");
+          } else {
+            td.textContent = valor;
+          }
           tr.appendChild(td);
         });
         const tdAcoes = document.createElement("td");
@@ -252,6 +267,34 @@
         tr.appendChild(tdAcoes);
         tbody.appendChild(tr);
       });
+
+      atualizarTotais();
+    }
+
+    function atualizarTotais() {
+      const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
+      let totalEntradas = 0;
+      let totalSaidas = 0;
+
+      linhas.forEach(tr => {
+        const tipo = tr.children[3].textContent.toLowerCase();
+        const valorStr = tr.children[4].textContent.replace("R$", "").replace(",", ".").trim();
+        const valor = parseFloat(valorStr) || 0;
+
+        if (tipo === "entrada") {
+          totalEntradas += valor;
+        } else if (tipo === "saída" || tipo === "saida") {
+          totalSaidas += valor;
+        }
+      });
+
+      const saldo = totalEntradas - totalSaidas;
+
+      document.getElementById("resumo").innerHTML = `
+        Total de Entradas: R$ ${totalEntradas.toFixed(2).replace(".", ",")}<br>
+        Total de Saídas: R$ ${totalSaidas.toFixed(2).replace(".", ",")}<br>
+        Saldo: R$ ${saldo.toFixed(2).replace(".", ",")}
+      `;
     }
 
     function baixarCSV() {
@@ -268,7 +311,7 @@
         const valores = [];
         for (let i = 0; i < 9; i++) {
           let texto = tr.children[i].textContent || "";
-          texto = texto.replace(/"/g, '""'); // escapa aspas
+          texto = texto.replace(/"/g, '""');
           valores.push(`"${texto}"`);
         }
         csv += valores.join(",") + "\n";
@@ -276,11 +319,9 @@
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
-
       const link = document.createElement("a");
       link.setAttribute("href", url);
       link.setAttribute("download", "lancamentos.csv");
-      link.style.display = "none";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -294,7 +335,8 @@
       reader.onload = function(e) {
         const conteudo = e.target.result;
         const linhas = conteudo.split("\n").filter(l => l.trim() !== "");
-        linhas.shift(); // remove o cabeçalho
+        linhas.shift(); // remove cabeçalho
+
         const dados = linhas.map(linha => {
           return linha.split(",").map(campo => campo.replace(/^"|"$/g, "").replace(/""/g, '"'));
         });
@@ -303,9 +345,15 @@
         dados.forEach((linha) => {
           if (linha.length === 0) return;
           const tr = document.createElement("tr");
-          linha.forEach((valor) => {
+          linha.forEach((valor, i) => {
             const td = document.createElement("td");
-            td.textContent = valor;
+            if (i === 4) {
+              const tipo = linha[3].toLowerCase();
+              td.textContent = valor;
+              td.className = tipo === "entrada" ? "entrada" : (tipo === "saída" || tipo === "saida" ? "saida" : "");
+            } else {
+              td.textContent = valor;
+            }
             tr.appendChild(td);
           });
           const tdAcoes = document.createElement("td");
@@ -315,9 +363,10 @@
         });
 
         salvarDados();
+        atualizarTotais();
       };
       reader.readAsText(file);
     }
   </script>
-  </body>
-  </html>
+</body>
+</html>
