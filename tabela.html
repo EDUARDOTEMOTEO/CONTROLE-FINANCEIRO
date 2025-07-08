@@ -290,12 +290,21 @@
 
       const saldo = totalEntradas - totalSaidas;
 
-      document.getElementById("resumo").innerHTML = `
-        Total de Entradas: R$ ${totalEntradas.toFixed(2).replace(".", ",")}<br>
-        Total de Saídas: R$ ${totalSaidas.toFixed(2).replace(".", ",")}<br>
-        Saldo: R$ ${saldo.toFixed(2).replace(".", ",")}
-      `;
-    }
+ const formatadoEntrada = totalEntradas.toFixed(2).replace(".", ",");
+const formatadoSaida = totalSaidas.toFixed(2).replace(".", ",");
+const formatadoSaldo = saldo.toFixed(2).replace(".", ",");
+
+// Atualiza a área no topo (totals)
+document.getElementById("total-entrada").textContent = formatadoEntrada;
+document.getElementById("total-saida").textContent = formatadoSaida;
+document.getElementById("saldo").textContent = formatadoSaldo;
+
+// Atualiza também a área "resumo", se quiser manter
+document.getElementById("resumo").innerHTML = `
+  Total de Entradas: R$ ${formatadoEntrada}<br>
+  Total de Saídas: R$ ${formatadoSaida}<br>
+  Saldo: R$ ${formatadoSaldo}
+`;
 
     function baixarCSV() {
       const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
