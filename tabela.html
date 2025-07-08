@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Tabela Financeira</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Seu CSS permanece o mesmo */
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #f4f6f8;
+      color: #333;
+    }
+    header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .sidebar {
+      background-color: #34495e;
+      color: white;
+      padding: 1rem;
+      min-width: 200px;
+      flex: 1;
+    }
+    .sidebar h2 {
+      font-size: 1.2rem;
+      margin-top: 0;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sidebar li {
+      margin: 0.5rem 0;
+    }
+    .sidebar a {
+      color: #ecf0f1;
+      text-decoration: none;
+    }
+    .sidebar a:hover {
+      text-decoration: underline;
+    }
+    .main-content {
+      flex: 3;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+    .total-area {
+      background: #ecf0f1;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin: 0.5rem 0.5rem 1rem 0;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    thead {
+      background-color: #2980b9;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 0.4rem;
+      box-sizing: border-box;
+    }
+    .legenda {
+      font-size: 0.9rem;
+      background: #fff;
+      padding: 1rem;
+      margin: 1rem;
+      border-left: 4px solid #3498db;
+    }
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+      }
+      .main-content {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Tabela Financeira</h1>
+  </header>
+
+  <div class="container">
+    <nav class="sidebar">
+      <h2>Menu</h2>
+      <ul>
+        <li><a href="../index.html">🏠 Início</a></li>
+        <li><a href="../tabela/tabela.html">📋 Tabela Financeira</a></li>
+        <li><a href="../graficos/graficos.html">📈 Gráficos</a></li>
+        <li><a href="../investimentos/investimentos.html">💰 Investimentos</a></li>
+        <li><a href="../taxas/taxas.html">📊 Taxas e Juros</a></li>
+        <li><a href="../compras/compras.html">🛒 Controle de Compras</a></li>
+      </ul>
+    </nav>
+
+    <main class="main-content">
+      <div class="total-area" id="totals">
+        <h3>Totais</h3>
+        Entradas: R$ <span id="total-entrada">0</span> |
+        Despesas: R$ <span id="total-saida">0</span> |
+        Saldo: R$ <span id="saldo">0</span>
+      </div>
+
+      <button onclick="adicionarLinha()">➕ Adicionar Lançamento</button>
+      <button onclick="baixarCSV()">⬇️ Baixar CSV</button>
+      <button onclick="document.getElementById('importar-csv').click()">📤 Importar CSV</button>
+      <input type="file" id="importar-csv" accept=".csv" style="display: none" onchange="importarCSV(event)">
+
+      <table id="tabela-financeira">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Descrição</th>
+            <th>Categoria</th>
+            <th>Tipo</th>
+            <th>Valor (R$)</th>
+            <th>Despesas</th>
+            <th>Movimento</th>
+            <th>Data de Pagamento</th>
+            <th>Pendência</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </main>
+  </div>
+
+  <div class="legenda">
+    <strong>Legenda:</strong><br>
+    <b>Data</b>: Quando o lançamento foi feito<br>
+    <b>Descrição</b>: Nome ou detalhe do item<br>
+    <b>Categoria</b>: Tipo de gasto ou receita<br>
+    <b>Tipo</b>: Entrada ou Saída<br>
+    <b>Valor</b>: Valor total<br>
+    <b>Despesas</b>: Valor específico de despesa<br>
+    <b>Movimento</b>: Forma de movimentação (ex: débito)<br>
+    <b>Data de Pagamento</b>: Quando foi pago<br>
+    <b>Pendência</b>: Se está pendente ou não
+  </div>
+
+  <script>
+    function adicionarLinha() {
+      const tbody = document.querySelector("#tabela-financeira tbody");
+      const tr = document.createElement("tr");
+      for (let i = 0; i < 9; i++) {
+        const td = document.createElement("td");
+        td.innerHTML = '<input type="text">';
+        tr.appendChild(td);
+      }
+      const tdAcoes = document.createElement("td");
+      tdAcoes.innerHTML = '<button onclick="salvarLinha(this)">Salvar</button>';
+      tr.appendChild(tdAcoes);
+      tbody.appendChild(tr);
+    }
+
+    function salvarLinha(botao) {
+      const tr = botao.parentElement.parentElement;
+      const inputs = tr.querySelectorAll("input");
+      inputs.forEach((input) => {
+        const td = input.parentElement;
+        td.textContent = input.value;
+      });
+      const tdAcoes = tr.querySelector("td:last-child");
+      tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
+      salvarDados();
+      atualizarTotais();
+    }
+
+    function editarLinha(botao) {
+      const tr = botao.parentElement.parentElement;
+      for (let i = 0; i < 9; i++) {
+        const td = tr.children[i];
+        const valor = td.textContent;
+        td.innerHTML = `<input type="text" value="${valor}">`;
+      }
+      const tdAcoes = tr.querySelector("td:last-child");
+      tdAcoes.innerHTML = '<button onclick="salvarLinha(this)">Salvar</button>';
+    }
+
+    function removerLinha(botao) {
+      const tr = botao.parentElement.parentElement;
+      tr.remove();
+      salvarDados();
+      atualizarTotais();
+    }
+
+    function salvarDados() {
+      const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
+      const dados = [];
+      linhas.forEach((tr) => {
+        const valores = [];
+        tr.querySelectorAll("td").forEach((td, i) => {
+          if (i < 9) valores.push(td.textContent);
+        });
+        dados.push(valores);
+      });
+      localStorage.setItem("dados_tabela", JSON.stringify(dados));
+    }
+
+    function carregarDados() {
+      const dados = JSON.parse(localStorage.getItem("dados_tabela")) || [];
+      const tbody = document.querySelector("#tabela-financeira tbody");
+    }
+</script>
+</body>
+</html>
