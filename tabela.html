@@ -343,11 +343,14 @@
         const tr = document.createElement("tr");
         linha.forEach((valor, i) => {
           const td = document.createElement("td");
-          if (i === 4) {
-            const tipo = linha[3].toLowerCase();
-            td.textContent = valor;
-            td.className = tipo === "entrada" ? "entrada" : (tipo === "saída" || tipo === "saida" ? "saida" : "");
-          } else {
+         if (i === 4) {
+  let tipo = linha[3].toLowerCase();
+  let valorFormatado = valor.replace(",", ".");
+  let numero = parseFloat(valorFormatado);
+  let exibicao = isNaN(numero) ? valor : numero.toFixed(2).replace(".", ",");
+  td.textContent = exibicao;
+  td.className = tipo === "entrada" ? "entrada" : (tipo === "saída" || tipo === "saida" ? "saida" : "");
+} else {
             td.textContent = valor;
           }
           tr.appendChild(td);
