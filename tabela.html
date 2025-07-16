@@ -439,49 +439,70 @@
     document.body.removeChild(link);
   }
 
-  function importarCSV(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+ function importarCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const conteudo = e.target.result;
-      const linhas = conteudo.split("\n").map(l => l.trim()).filter(l => l);
-      linhas.shift(); // remove cabeçalho
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const conteudo = e.target.result;
+    const linhas = conteudo.split("\n").map(l => l.trim()).filter(l => l);
+    linhas.shift(); // remove o cabeçalho
 
-      const dados = linhas.map(linha => {
-        return linha.split(";").map(campo => campo.replace(/^"|"$/g, "").replace(/""/g, '"'));
+    const dados = linhas.map(linha => {
+      // divide por ponto e vírgula e remove aspas duplicadas
+      return linha.split(";").map(campo =>
+        campo.replace(/^"|"$/g, "").replace(/""/g, '"')
+      );
+    });
+
+    const tbody = document.querySelector("#tabela-financeira tbody");
+    tbody.innerHTML = ""; // limpa a tabela antes de importar
+
+    dados.forEach((linha) => {
+      if (linha.length !== 9) {
+        console.warn("Linha ignorada: número de colunas inválido →", linha);
+        return; // ignora linhas com menos ou mais de 9 colunas
+      }
+
+      const tr = document.createElement("tr");
+      linha.forEach((valor, i) => {
+        const td = document.createElement("td");
+
+        if (i === 4) {
+          let tipo = linha[3].toLowerCase();
+          let valorFormatado = valor.replace(",", ".");
+          let numero = parseFloat(valorFormatado);
+          let exibicao = !isNaN(numero)
+            ? `R$ ${numero.toFixed(2).replace(".", ",")}`
+            : "R$ 0,00";
+          td.textContent = exibicao;
+          td.className =
+            tipo === "entrada"
+              ? "entrada"
+              : tipo === "saída" || tipo === "saida"
+              ? "saida"
+              : "";
+        } else {
+          td.textContent = valor;
+        }
+
+        tr.appendChild(td);
       });
 
-      const tbody = document.querySelector("#tabela-financeira tbody");
-      dados.forEach((linha) => {
-        if (linha.length === 0) return;
-        const tr = document.createElement("tr");
-        linha.forEach((valor, i) => {
-          const td = document.createElement("td");
-          if (i === 4) {
-            let tipo = linha[3].toLowerCase();
-            let valorFormatado = valor.replace(",", ".");
-            let numero = parseFloat(valorFormatado);
-            let exibicao = !isNaN(numero) ? `R$ ${numero.toFixed(2).replace(".", ",")}` : "R$ 0,00";
-            td.textContent = exibicao;
-            td.className = tipo === "entrada" ? "entrada" : (tipo === "saída" || tipo === "saida" ? "saida" : "");
-          } else {
-            td.textContent = valor;
-          }
-          tr.appendChild(td);
-        });
-        const tdAcoes = document.createElement("td");
-        tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
-        tr.appendChild(tdAcoes);
-        tbody.appendChild(tr);
-      });
+      const tdAcoes = document.createElement("td");
+      tdAcoes.innerHTML =
+        '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
+      tr.appendChild(tdAcoes);
+      tbody.appendChild(tr);
+    });
 
-      salvarDados();
-      atualizarTotais();
-    };
-    reader.readAsText(file);
-  }
+    salvarDados();
+    atualizarTotais();
+  };
+
+  reader.readAsText(file);
+}
 
   window.onload = carregarDados;
 </script>
