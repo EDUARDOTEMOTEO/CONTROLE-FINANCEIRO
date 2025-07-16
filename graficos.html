@@ -1,35 +1,33 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>📊 Gráficos Financeiros</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+import pandas as pd
+import plotly.express as px
 
-  <!-- Estilo principal da página -->
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <header>
-    <h1>📈 Gráficos Financeiros</h1>
-  </header>
+# Lê a tabela de lançamentos
+df = pd.read_html("tabela.html")[0]
 
-  <div class="container">
-    <nav class="sidebar">
-      <h2>Menu</h2>
-      <ul>
-        <li><a href="index.html">🏠 Início</a></li>
-        <li><a href="tabela.html">📋 Tabela Financeira</a></li>
-        <li><a href="graficos.html">📈 Gráficos</a></li>
-        <li><a href="investimentos/investimentos.html">💰 Investimentos</a></li>
-        <li><a href="taxas/taxas.html">📊 Taxas e Juros</a></li>
-        <li><a href="compras/compras.html">🛒 Controle de Compras</a></li>
-      </ul>
-    </nav>
+# Limpa e converte os dados
+df["Valor (R$)"] = pd.to_numeric(df["Valor (R$)"], errors="coerce")
+df["Despesas"] = pd.to_numeric(df["Despesas"], errors="coerce")
+df["Data"] = pd.to_datetime(df["Data"], errors="coerce")
+df = df.dropna(subset=["Data", "Tipo", "Valor (R$)", "Despesas", "Categoria"])
 
-    <main class="main-content">
-      <div class="grafico-container">
-        <iframe src="bar_categoria.html" title="Despesas por Categoria"></iframe>
-        <iframe src="linha_temporal.html" title="Fluxo Financeiro ao Longo do Tempo"></iframe>
-        <iframe src="pizza_movimento.html" title="Entradas vs Saídas"></iframe>
-      </div>
-    </main>
+# Filtra entradas e saídas
+df_entrada = df[df["Tipo"].str.lower() == "entrada"]
+df_saida = df[df["Tipo"].str.lower().isin(["saída", "saida"])]
+
+# Gráfico de barras por categoria de despesa
+bar = px.bar(df_saida.groupby("Categoria", as_index=False).sum(),
+             x="Categoria", y="Despesas",
+             title="💸 Despesas por Categoria")
+bar.write_html("bar_categoria.html")
+
+# Gráfico de linha temporal de lançamentos
+linha = px.line(df.groupby(["Data", "Tipo"], as_index=False).sum(),
+                x="Data", y="Valor (R$)", color="Tipo",
+                title="📆 Fluxo Financeiro ao Longo do Tempo",
+                markers=True)
+linha.write_html("linha_temporal.html")
+
+# Gráfico de pizza: entradas vs saídas
+pizza = px.pie(df, names="Tipo", values="Valor (R$)",
+               title="🧾 Entradas vs Saídas")
+pizza.write_html("pizza_movimento.html")
