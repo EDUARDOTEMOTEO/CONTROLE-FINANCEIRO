@@ -7,24 +7,6 @@
 
   <!-- Estilo principal da página -->
   <link rel="stylesheet" href="style.css">
-
-  <!-- Estilo da tabela financeira, se quiser manter também -->
-  <link rel="stylesheet" href="tabela/tabela.css">
-
-  <style>
-    iframe {
-      width: 100%;
-      height: 420px;
-      border: none;
-      margin-bottom: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      background: white;
-    }
-    .grafico-container {
-      padding: 1rem;
-    }
-  </style>
 </head>
 <body>
   <header>
@@ -47,10 +29,7 @@
     <main class="main-content">
       <div class="grafico-container">
         <iframe src="bar_categoria.html" title="Despesas por Categoria"></iframe>
-        <iframe src="linha_temporal.html" title="Evolução das Despesas"></iframe>
-        <iframe src="pizza_movimento.html" title="Despesas por Movimento"></iframe>
+        <iframe src="linha_temporal.html" title="Fluxo Financeiro ao Longo do Tempo"></iframe>
+        <iframe src="pizza_movimento.html" title="Entradas vs Saídas"></iframe>
       </div>
     </main>
-  </div>
-</body>
-</html>
