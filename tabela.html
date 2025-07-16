@@ -335,11 +335,11 @@ function baixarCSV() {
     const reader = new FileReader();
     reader.onload = function(e) {
       const conteudo = e.target.result;
-      const linhas = conteudo.split("\n").filter(l => l.trim() !== "");
+     const linhas = conteudo.split("\n").map(l => l.trim()).filter(l => l);
       linhas.shift();
 
       const dados = linhas.map(linha => {
-        return linha.split(",").map(campo => campo.replace(/^"|"$/g, "").replace(/""/g, '"'));
+      return linha.split(";").map(campo => campo.replace(/^"|"$/g, "").replace(/""/g, '"'));
       });
 
       const tbody = document.querySelector("#tabela-financeira tbody");
