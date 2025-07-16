@@ -1,29 +1,40 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Controle Financeiro - Início</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Controle Financeiro - Início</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Font Awesome para ícones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Estilo separado -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>Bem-vindo ao Controle Financeiro</h1>
-    </header>
-    <div class="container">
-        <nav class="sidebar">
-            <h2>Menu</h2>
-            <ul>
-                <li><a href="tabela/tabela.html">Tabela Financeira</a></li>
-                <li><a href="graficos/graficos.html">Gráficos</a></li>
-                <li><a href="investimentos/investimentos.html">Investimentos</a></li>
-                <li><a href="taxas/taxas.html">Taxas e Juros</a></li>
-                <li><a href="compras/compras.html">Controle de Compras</a></li>
-            </ul>
-        </nav>
-        <main class="main-content">
-            <h2>Início</h2>
-            <p>Este é o seu painel de controle financeiro pessoal. Use o menu à esquerda para acessar os módulos disponíveis.</p>
-        </main>
-    </div>
+  <header>
+    <h1>Bem-vindo ao Controle Financeiro</h1>
+  </header>
+  <div class="container">
+    <nav class="sidebar">
+      <h2>Menu</h2>
+      <ul>
+        <li><a href="tabela/tabela.html"><i class="fas fa-table"></i> Tabela Financeira</a></li>
+        <li><a href="graficos/graficos.html"><i class="fas fa-chart-line"></i> Gráficos</a></li>
+        <li><a href="investimentos/investimentos.html"><i class="fas fa-coins"></i> Investimentos</a></li>
+        <li><a href="taxas/taxas.html"><i class="fas fa-percent"></i> Taxas e Juros</a></li>
+        <li><a href="compras/compras.html"><i class="fas fa-shopping-cart"></i> Controle de Compras</a></li>
+      </ul>
+    </nav>
+    <main class="main-content">
+      <h2>Início</h2>
+      <p>Este é o seu painel de controle financeiro pessoal. Use o menu à esquerda para acessar os módulos disponíveis.</p>
+
+      <!-- Cartões com resumo financeiro -->
+      <div class="card-grid">
+        <div class="card">💰 Saldo Atual: R$ 3.200,00</div>
+        <div class="card">📈 Investimentos: R$ 15.000,00</div>
+        <div class="card">🛒 Compras do mês: R$ 620,00</div>
+      </div>
+    </main>
+  </div>
 </body>
 </html>
