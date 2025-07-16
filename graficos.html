@@ -4,6 +4,7 @@ import plotly.express as px
 
 # Lê o arquivo HTML
 df = pd.read_html("tabela.html")[0]
+<li><a href="../graficos/graficos.html">📈 Gráficos</a></li>
 
 # Conversões de tipo
 df["Valor (R$)"] = pd.to_numeric(df["Valor (R$)"], errors="coerce")
