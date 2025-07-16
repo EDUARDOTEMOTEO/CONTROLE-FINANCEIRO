@@ -1,7 +1,8 @@
+/* Estrutura geral */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
-  background-color: #f2f4f8;
+  background-color: #f3f6fa;
   color: #333;
 }
 
@@ -13,25 +14,29 @@ header {
   color: white;
   padding: 20px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
 .container {
   display: flex;
+  flex-wrap: wrap;
   min-height: 100vh;
 }
 
 .sidebar {
-  width: 220px;
   background-color: #34495e;
   color: white;
   padding: 20px;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  min-width: 220px;
+  flex-grow: 0;
+  flex-shrink: 0;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.1);
 }
 
 .sidebar h2 {
   font-size: 18px;
-  margin-bottom: 10px;
+  margin-top: 0;
+  margin-bottom: 15px;
 }
 
 .sidebar ul {
@@ -39,20 +44,21 @@ header {
   padding: 0;
 }
 
-.sidebar ul li {
+.sidebar li {
   margin: 10px 0;
 }
 
-.sidebar ul li a {
-  color: white;
+.sidebar a {
+  color: #ecf0f1;
   text-decoration: none;
   display: block;
   padding: 8px;
   border-radius: 4px;
+  transition: background 0.3s ease;
 }
 
-.sidebar ul li a:hover,
-.sidebar ul li a.active {
+.sidebar a:hover,
+.sidebar a.active {
   background-color: #1abc9c;
   font-weight: bold;
 }
@@ -60,26 +66,93 @@ header {
 .main-content {
   flex: 1;
   padding: 30px;
+  overflow-x: auto;
 }
 
-.card-grid {
-  display: flex;
-  gap: 20px;
-  margin-top: 20px;
-  flex-wrap: wrap;
+/* Área de totais e botões */
+.total-area {
+  background: #ecf0f1;
+  padding: 16px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.card {
-  flex: 1;
-  min-width: 250px;
-  padding: 20px;
-  background: white;
-  border-left: 5px solid #3498db;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  margin: 10px 8px 20px 0;
   border-radius: 5px;
-  font-size: 16px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.3s ease;
 }
 
+button:hover {
+  background-color: #2980b9;
+}
+
+/* Tabela */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+th, td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+thead {
+  background-color: #2980b9;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Campos de entrada */
+input[type="text"] {
+  width: 100%;
+  padding: 0.4rem;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+/* Legenda informativa */
+.legenda {
+  font-size: 0.95rem;
+  background: #fff;
+  padding: 1rem;
+  margin-top: 1.5rem;
+  border-left: 5px solid #3498db;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+/* Estilização de valores */
+.entrada {
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.saida {
+  color: #c0392b;
+  font-weight: bold;
+}
+
+/* Responsividade */
 @media (max-width: 768px) {
   .container {
     flex-direction: column;
@@ -89,8 +162,5 @@ header {
   }
   .main-content {
     width: 100%;
-  }
-  .card-grid {
-    flex-direction: column;
   }
 }
