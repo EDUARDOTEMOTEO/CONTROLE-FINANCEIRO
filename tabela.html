@@ -8,7 +8,7 @@
 </head>
 <body>
   <header>
-    <h1>Tabela Financeira</h1>
+    <h1>📋 Tabela Financeira</h1>
   </header>
 
   <div class="container">
@@ -31,10 +31,13 @@
         Despesas: R$ <span id="total-saida">0</span> |
         Saldo: R$ <span id="saldo">0</span>
       </div>
-      <button onclick="adicionarLinha()">➕ Adicionar Lançamento</button>
-      <button onclick="baixarCSV()">⬇️ Baixar CSV</button>
-      <button onclick="document.getElementById('importar-csv').click()">📤 Importar CSV</button>
-      <input type="file" id="importar-csv" accept=".csv" style="display: none" onchange="importarCSV(event)">
+
+      <div class="botoes">
+        <button onclick="adicionarLinha()">➕ Adicionar Lançamento</button>
+        <button onclick="baixarCSV()">⬇️ Baixar CSV</button>
+        <button onclick="document.getElementById('importar-csv').click()">📤 Importar CSV</button>
+        <input type="file" id="importar-csv" accept=".csv" style="display: none" onchange="importarCSV(event)">
+      </div>
 
       <table id="tabela-financeira">
         <thead>
@@ -69,6 +72,8 @@
     </main>
   </div>
 
+  <script src="scripts.js"></script> <!-- seu JavaScript pode ser separado -->
+</body>
 <script>
 function adicionarLinha() {
   const tbody = document.querySelector("#tabela-financeira tbody");
