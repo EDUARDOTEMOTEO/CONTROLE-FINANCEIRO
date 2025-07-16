@@ -180,119 +180,6 @@
   </div>
 
 <script>
-  function adicionarLinha() {
-    const tbody = document.querySelector("#tabela-financeira tbody");
-    const tr = document.createElement("tr");
-    for (let i = 0; i < 9; i++) {
-      const td = document.createElement("td");
-      td.innerHTML = '<input type="text">';
-      tr.appendChild(td);
-    }
-    const tdAcoes = document.createElement("td");
-    tdAcoes.innerHTML = '<button onclick="salvarLinha(this)">Salvar</button>';
-    tr.appendChild(tdAcoes);
-    tbody.appendChild(tr);
-  }
-
-  function salvarLinha(botao) {
-    const tr = botao.parentElement.parentElement;
-    const inputs = tr.querySelectorAll("input");
-    inputs.forEach((input) => {
-      const td = input.parentElement;
-      td.textContent = input.value;
-    });
-    const tdAcoes = tr.querySelector("td:last-child");
-    tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
-    salvarDados();
-    atualizarTotais();
-  }
-
-  function editarLinha(botao) {
-    const tr = botao.parentElement.parentElement;
-    for (let i = 0; i < 9; i++) {
-      const td = tr.children[i];
-      const valor = td.textContent;
-      td.innerHTML = `<input type="text" value="${valor}">`;
-    }
-    const tdAcoes = tr.querySelector("td:last-child");
-    tdAcoes.innerHTML = '<button onclick="salvarLinha(this)">Salvar</button>';
-  }
-
-  function removerLinha(botao) {
-    const tr = botao.parentElement.parentElement;
-    tr.remove();
-    salvarDados();
-    atualizarTotais();
-  }
-
-  function salvarDados() {
-    const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
-    const dados = [];
-    linhas.forEach((tr) => {
-      const valores = [];
-      tr.querySelectorAll("td").forEach((td, i) => {
-        if (i < 9) valores.push(td.textContent);
-      });
-      dados.push(valores);
-    });
-    localStorage.setItem("dados_tabela", JSON.stringify(dados));
-  }
-
-  function carregarDados() {
-    const dados = JSON.parse(localStorage.getItem("dados_tabela")) || [];
-    const tbody = document.querySelector("#tabela-financeira tbody");
-    tbody.innerHTML = "";
-
-    dados.forEach((linha) => {
-      const tr = document.createElement("tr");
-      linha.forEach((valor, i) => {
-        const td = document.createElement("td");
-        if (i === 4) {
-          const tipo = linha[3].toLowerCase();
-          td.textContent = valor;
-          td.className = tipo === "entrada" ? "entrada" : (tipo === "saída" || tipo === "saida" ? "saida" : "");
-        } else {
-          td.textContent = valor;
-        }
-        tr.appendChild(td);
-      });
-      const tdAcoes = document.createElement("td");
-      tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
-      tr.appendChild(tdAcoes);
-      tbody.appendChild(tr);
-    });
-
-    atualizarTotais();
-  }
-
-  function atualizarTotais() {
-    const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
-    let totalEntradas = 0;
-    let totalSaidas = 0;
-
-    linhas.forEach(tr => {
-      const tipo = tr.children[3].textContent.toLowerCase();
-      const valorStr = tr.children[4].textContent.replace("R$", "").replace(",", ".").trim();
-      const valor = parseFloat(valorStr) || 0;
-
-      if (tipo === "entrada") {
-        totalEntradas += valor;
-      } else if (tipo === "saída" || tipo === "saida") {
-        totalSaidas += valor;
-      }
-    });
-
-    const saldo = totalEntradas - totalSaidas;
-
-    const formatadoEntrada = totalEntradas.toFixed(2).replace(".", ",");
-    const formatadoSaida = totalSaidas.toFixed(2).replace(".", ",");
-    const formatadoSaldo = saldo.toFixed(2).replace(".", ",");
-
-    document.getElementById("total-entrada").textContent = formatadoEntrada;
-    document.getElementById("total-saida").textContent = formatadoSaida;
-    document.getElementById("saldo").textContent = formatadoSaldo;
-  }
-<script>
 function adicionarLinha() {
   const tbody = document.querySelector("#tabela-financeira tbody");
   const tr = document.createElement("tr");
@@ -315,7 +202,8 @@ function salvarLinha(botao) {
     td.textContent = input.value;
   });
   const tdAcoes = tr.querySelector("td:last-child");
-  tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
+  tdAcoes.innerHTML =
+    '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
   salvarDados();
   atualizarTotais();
 }
@@ -324,8 +212,7 @@ function editarLinha(botao) {
   const tr = botao.parentElement.parentElement;
   for (let i = 0; i < 9; i++) {
     const td = tr.children[i];
-    const valor = td.textContent;
-    td.innerHTML = `<input type="text" value="${valor}">`;
+    td.innerHTML = `<input type="text" value="${td.textContent}">`;
   }
   const tdAcoes = tr.querySelector("td:last-child");
   tdAcoes.innerHTML = '<button onclick="salvarLinha(this)">Salvar</button>';
@@ -363,8 +250,12 @@ function carregarDados() {
       if (i === 4) {
         const tipo = linha[3].toLowerCase();
         const numero = parseFloat(valor.replace(",", "."));
-        td.textContent = isNaN(numero) ? "R$ 0,00" : `R$ ${numero.toFixed(2).replace(".", ",")}`;
-        td.className = tipo === "entrada" ? "entrada" : (tipo === "saída" || tipo === "saida" ? "saida" : "");
+        td.textContent = isNaN(numero)
+          ? "R$ 0,00"
+          : `R$ ${numero.toFixed(2).replace(".", ",")}`;
+        td.className = tipo === "entrada"
+          ? "entrada"
+          : (tipo === "saída" || tipo === "saida" ? "saida" : "");
       } else {
         td.textContent = valor;
       }
@@ -372,7 +263,8 @@ function carregarDados() {
     });
 
     const tdAcoes = document.createElement("td");
-    tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
+    tdAcoes.innerHTML =
+      '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
     tr.appendChild(tdAcoes);
     tbody.appendChild(tr);
   });
@@ -387,21 +279,42 @@ function atualizarTotais() {
 
   linhas.forEach(tr => {
     const tipo = tr.children[3].textContent.toLowerCase();
-    const valor = parseFloat(tr.children[4].textContent.replace("R$", "").replace(",", ".").trim()) || 0;
+    const valor = parseFloat(
+      tr.children[4].textContent.replace("R$", "").replace(",", ".").trim()
+    ) || 0;
+
     if (tipo === "entrada") totalEntradas += valor;
     else if (tipo === "saída" || tipo === "saida") totalSaidas += valor;
   });
 
-  document.getElementById("total-entrada").textContent = totalEntradas.toFixed(2).replace(".", ",");
-  document.getElementById("total-saida").textContent = totalSaidas.toFixed(2).replace(".", ",");
-  document.getElementById("saldo").textContent = (totalEntradas - totalSaidas).toFixed(2).replace(".", ",");
+  document.getElementById("total-entrada").textContent = totalEntradas
+    .toFixed(2)
+    .replace(".", ",");
+  document.getElementById("total-saida").textContent = totalSaidas
+    .toFixed(2)
+    .replace(".", ",");
+  document.getElementById("saldo").textContent = (totalEntradas - totalSaidas)
+    .toFixed(2)
+    .replace(".", ",");
 }
 
 function baixarCSV() {
   const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
   if (linhas.length === 0) return alert("Nenhum dado para exportar.");
-  const cabecalho = ["Data","Descrição","Categoria","Tipo","Valor (R$)","Despesas","Movimento","Data de Pagamento","Pendência"];
+
+  const cabecalho = [
+    "Data",
+    "Descrição",
+    "Categoria",
+    "Tipo",
+    "Valor (R$)",
+    "Despesas",
+    "Movimento",
+    "Data de Pagamento",
+    "Pendência"
+  ];
   let csv = cabecalho.join(";") + "\n";
+
   linhas.forEach(tr => {
     const valores = [];
     for (let i = 0; i < 9; i++) {
@@ -409,13 +322,16 @@ function baixarCSV() {
       if (i === 4) {
         texto = texto.replace("R$", "").trim().replace(",", ".");
         const numero = parseFloat(texto);
-        texto = isNaN(numero) ? "0,00" : numero.toFixed(2).replace(".", ",");
+        texto = isNaN(numero)
+          ? "0,00"
+          : numero.toFixed(2).replace(".", ",");
       }
       texto = texto.replace(/"/g, '""');
       valores.push(`"${texto}"`);
     }
     csv += valores.join(";") + "\n";
   });
+
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -440,10 +356,12 @@ function importarCSV(event) {
     linhas.forEach((linha, index) => {
       const campos = linha.includes(";") ? linha.split(";") : linha.split(",");
       const valores = campos.map(campo => campo.replace(/^"|"$/g, "").replace(/""/g, '"').trim());
+
       if (valores.length !== 9) {
         console.warn(`Linha ${index + 2} ignorada: ${valores.length} colunas`);
         return;
       }
+
       dados.push(valores);
 
       const tr = document.createElement("tr");
@@ -452,9 +370,13 @@ function importarCSV(event) {
         if (i === 4) {
           const tipo = valores[3].toLowerCase();
           const numero = parseFloat(valor.replace(",", "."));
-          const exibicao = isNaN(numero) ? "R$ 0,00" : `R$ ${numero.toFixed(2).replace(".", ",")}`;
+          const exibicao = isNaN(numero)
+            ? "R$ 0,00"
+            : `R$ ${numero.toFixed(2).replace(".", ",")}`;
           td.textContent = exibicao;
-          td.className = tipo === "entrada" ? "entrada" : (tipo === "saída" || tipo === "saida" ? "saida" : "");
+          td.className = tipo === "entrada"
+            ? "entrada"
+            : (tipo === "saída" || tipo === "saida" ? "saida" : "");
         } else {
           td.textContent = valor;
         }
@@ -462,7 +384,8 @@ function importarCSV(event) {
       });
 
       const tdAcoes = document.createElement("td");
-      tdAcoes.innerHTML = '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
+      tdAcoes.innerHTML =
+        '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
       tr.appendChild(tdAcoes);
       tbody.appendChild(tr);
     });
