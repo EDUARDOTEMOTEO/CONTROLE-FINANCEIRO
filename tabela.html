@@ -293,43 +293,30 @@
     document.getElementById("saldo").textContent = formatadoSaldo;
   }
 
- function baixarCSV() {
-  const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
-  if (linhas.length === 0) {
-    alert("Nenhum dado para exportar.");
-    return;
-  }
-
-  const cabecalho = ["Data", "Descrição", "Categoria", "Tipo", "Valor (R$)", "Despesas", "Movimento", "Data de Pagamento", "Pendência"];
-  let csv = cabecalho.join(",") + "\n";
-
-  linhas.forEach((tr) => {
-    const valores = [];
-    for (let i = 0; i < 9; i++) {
-      let texto = tr.children[i].textContent || "";
-
-      // 🔍 Remove o símbolo "R$" e ajusta casas decimais se for campo de valor
-      if (i === 4) {
-        texto = texto.replace("R$", "").trim().replace(",", ".");
-        let numero = parseFloat(texto);
-        texto = !isNaN(numero) ? numero.toFixed(2).replace(".", ",") : "0,00";
-      }
-
-      texto = texto.replace(/"/g, '""'); // Escapa aspas
-      valores.push(`"${texto}"`);
+function baixarCSV() {
+    const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
+    if (linhas.length === 0) {
+      alert("Nenhum dado para exportar.");
+      return;
     }
-    csv += valores.join(",") + "\n";
-  });
 
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "lancamentos.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-});
+    const cabecalho = ["Data", "Descrição", "Categoria", "Tipo", "Valor (R$)", "Despesas", "Movimento", "Data de Pagamento", "Pendência"];
+    let csv = cabecalho.join(",") + "\n";
+
+    linhas.forEach((tr) => {
+      const valores = [];
+      for (let i = 0; i < 9; i++) {
+        let texto = tr.children[i].textContent || "";
+        if (i === 4) {
+          texto = texto.replace("R$", "").trim().replace(",", ".");
+          let numero = parseFloat(texto);
+          texto = !isNaN(numero) ? numero.toFixed(2).replace(".", ",") : "0,00";
+        }
+        texto = texto.replace(/"/g, '""');
+        valores.push(`"${texto}"`);
+      }
+      csv += valores.join(",") + "\n";
+    });
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -349,7 +336,7 @@
     reader.onload = function(e) {
       const conteudo = e.target.result;
       const linhas = conteudo.split("\n").filter(l => l.trim() !== "");
-      linhas.shift(); // remove cabeçalho
+      linhas.shift();
 
       const dados = linhas.map(linha => {
         return linha.split(",").map(campo => campo.replace(/^"|"$/g, "").replace(/""/g, '"'));
@@ -361,14 +348,14 @@
         const tr = document.createElement("tr");
         linha.forEach((valor, i) => {
           const td = document.createElement("td");
-         if (i === 4) {
-  let tipo = linha[3].toLowerCase();
-  let valorFormatado = valor.replace(",", ".");
-  let numero = parseFloat(valorFormatado);
-  let exibicao = isNaN(numero) ? valor : numero.toFixed(2).replace(".", ",");
-  td.textContent = exibicao;
-  td.className = tipo === "entrada" ? "entrada" : (tipo === "saída" || tipo === "saida" ? "saida" : "");
-} else {
+          if (i === 4) {
+            let tipo = linha[3].toLowerCase();
+            let valorFormatado = valor.replace(",", ".");
+            let numero = parseFloat(valorFormatado);
+            let exibicao = !isNaN(numero) ? `R$ ${numero.toFixed(2).replace(".", ",")}` : "R$ 0,00";
+            td.textContent = exibicao;
+            td.className = tipo === "entrada" ? "entrada" : (tipo === "saída" || tipo === "saida" ? "saida" : "");
+          } else {
             td.textContent = valor;
           }
           tr.appendChild(td);
@@ -385,7 +372,6 @@
     reader.readAsText(file);
   }
 
-  // Carrega dados automaticamente ao iniciar
   window.onload = carregarDados;
 </script>
 </body>
