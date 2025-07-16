@@ -1,0 +1,38 @@
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
+
+# Lê o arquivo HTML
+df = pd.read_html("tabela.html")[0]
+
+# Conversões de tipo
+df["Valor (R$)"] = pd.to_numeric(df["Valor (R$)"], errors="coerce")
+df["Despesas"] = pd.to_numeric(df["Despesas"], errors="coerce")
+
+# Limpeza de dados
+df = df.dropna(subset=["Valor (R$)", "Despesas", "Tipo", "Categoria", "Movimento"])
+
+# 🎯 Gráfico de barras por categoria de despesa
+df_saida = df[df["Tipo"].str.lower() == "saída"]
+bar_categoria = px.bar(df_saida.groupby("Categoria", as_index=False).sum(),
+                       x="Categoria", y="Despesas",
+                       title="💸 Despesas por Categoria",
+                       color="Despesas",
+                       template="plotly_white")
+
+# 📈 Linha do tempo dos movimentos
+df["Data"] = pd.to_datetime(df["Data"], errors="coerce")
+line_temporal = px.line(df.groupby("Data", as_index=False).sum(),
+                        x="Data", y="Despesas",
+                        title="📆 Evolução das Despesas ao Longo do Tempo",
+                        markers=True,
+                        template="plotly_white")
+
+# 🥧 Pizza por tipo de movimento
+pie_movimento = px.pie(df, names="Movimento", values="Despesas",
+                       title="🧾 Distribuição das Despesas por Movimento")
+
+# Exibir gráficos
+bar_categoria.show()
+line_temporal.show()
+pie_movimento.show()
