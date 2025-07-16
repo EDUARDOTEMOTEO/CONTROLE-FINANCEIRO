@@ -449,28 +449,24 @@
     const linhas = conteudo.split("\n").map(l => l.trim()).filter(l => l);
     linhas.shift(); // remove o cabeçalho
 
-    const dados = linhas.map(linha => {
-      // divide por ponto e vírgula e remove aspas duplicadas
-      return linha.split(";").map(campo =>
-        campo.replace(/^"|"$/g, "").replace(/""/g, '"')
-      );
-    });
-
     const tbody = document.querySelector("#tabela-financeira tbody");
-    tbody.innerHTML = ""; // limpa a tabela antes de importar
+    tbody.innerHTML = "";
 
-    dados.forEach((linha) => {
-      if (linha.length !== 9) {
-        console.warn("Linha ignorada: número de colunas inválido →", linha);
-        return; // ignora linhas com menos ou mais de 9 colunas
+    linhas.forEach((linha) => {
+      // Expressão regular para dividir campos entre aspas
+      const campos = linha.match(/(".*?"|[^;]+)(?=\s*;|\s*$)/g);
+      if (!campos || campos.length < 9) {
+        console.warn("Linha ignorada:", linha);
+        return;
       }
 
       const tr = document.createElement("tr");
-      linha.forEach((valor, i) => {
+      campos.forEach((campo, i) => {
         const td = document.createElement("td");
+        let valor = campo.replace(/^"|"$/g, "");
 
         if (i === 4) {
-          let tipo = linha[3].toLowerCase();
+          let tipo = campos[3].toLowerCase();
           let valorFormatado = valor.replace(",", ".");
           let numero = parseFloat(valorFormatado);
           let exibicao = !isNaN(numero)
