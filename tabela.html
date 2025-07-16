@@ -293,25 +293,43 @@
     document.getElementById("saldo").textContent = formatadoSaldo;
   }
 
-  function baixarCSV() {
-    const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
-    if (linhas.length === 0) {
-      alert("Nenhum dado para exportar.");
-      return;
-    }
+ function baixarCSV() {
+  const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
+  if (linhas.length === 0) {
+    alert("Nenhum dado para exportar.");
+    return;
+  }
 
-    const cabecalho = ["Data", "Descrição", "Categoria", "Tipo", "Valor (R$)", "Despesas", "Movimento", "Data de Pagamento", "Pendência"];
-    let csv = cabecalho.join(",") + "\n";
+  const cabecalho = ["Data", "Descrição", "Categoria", "Tipo", "Valor (R$)", "Despesas", "Movimento", "Data de Pagamento", "Pendência"];
+  let csv = cabecalho.join(",") + "\n";
 
-    linhas.forEach((tr) => {
-      const valores = [];
-      for (let i = 0; i < 9; i++) {
-        let texto = tr.children[i].textContent || "";
-        texto = texto.replace(/"/g, '""');
-        valores.push(`"${texto}"`);
+  linhas.forEach((tr) => {
+    const valores = [];
+    for (let i = 0; i < 9; i++) {
+      let texto = tr.children[i].textContent || "";
+
+      // 🔍 Remove o símbolo "R$" e ajusta casas decimais se for campo de valor
+      if (i === 4) {
+        texto = texto.replace("R$", "").trim().replace(",", ".");
+        let numero = parseFloat(texto);
+        texto = !isNaN(numero) ? numero.toFixed(2).replace(".", ",") : "0,00";
       }
-      csv += valores.join(",") + "\n";
-    });
+
+      texto = texto.replace(/"/g, '""'); // Escapa aspas
+      valores.push(`"${texto}"`);
+    }
+    csv += valores.join(",") + "\n";
+  });
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", "lancamentos.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+});
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
