@@ -439,31 +439,44 @@
     document.body.removeChild(link);
   }
 
- function importarCSV(event) {
+function importarCSV(event) {
   const file = event.target.files[0];
-  if (!file) return;
+  if (!file) {
+    alert("Nenhum arquivo selecionado.");
+    return;
+  }
 
   const reader = new FileReader();
   reader.onload = function(e) {
     const conteudo = e.target.result;
     const linhas = conteudo.split("\n").map(l => l.trim()).filter(l => l);
+    if (linhas.length < 2) {
+      alert("Arquivo CSV vazio ou incorreto.");
+      return;
+    }
+
     linhas.shift(); // remove o cabeçalho
 
     const tbody = document.querySelector("#tabela-financeira tbody");
     tbody.innerHTML = "";
 
-    linhas.forEach((linha) => {
-      // Expressão regular para dividir campos entre aspas
-      const campos = linha.match(/(".*?"|[^;]+)(?=\s*;|\s*$)/g);
-      if (!campos || campos.length < 9) {
-        console.warn("Linha ignorada:", linha);
+    linhas.forEach((linha, index) => {
+      // detecta separador automaticamente (; ou ,)
+      let campos = linha.includes(";") ? linha.split(";") : linha.split(",");
+
+      // limpa aspas
+      campos = campos.map(campo =>
+        campo.replace(/^"|"$/g, "").replace(/""/g, '"').trim()
+      );
+
+      if (campos.length !== 9) {
+        console.warn(`Linha ${index + 2} ignorada: ${campos.length} colunas`);
         return;
       }
 
       const tr = document.createElement("tr");
-      campos.forEach((campo, i) => {
+      campos.forEach((valor, i) => {
         const td = document.createElement("td");
-        let valor = campo.replace(/^"|"$/g, "");
 
         if (i === 4) {
           let tipo = campos[3].toLowerCase();
@@ -495,11 +508,11 @@
 
     salvarDados();
     atualizarTotais();
+    alert("Importação concluída com sucesso!");
   };
 
-  reader.readAsText(file);
+  reader.readAsText(file, "UTF-8");
 }
-
   window.onload = carregarDados;
 </script>
 </body>
