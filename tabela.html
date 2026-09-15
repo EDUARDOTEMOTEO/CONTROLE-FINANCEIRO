@@ -2,23 +2,26 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Tabela Financeira - Partidas Dobradas</title>
+  <title>Tabela Financeira - Lançamentos Contábeis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <h1><i class="fas fa-book-journal-whills"></i> Livro Razão & Partidas Dobradas</h1>
+    <h1><i class="fas fa-balance-scale"></i> Gestão Contábil & Financeira</h1>
   </header>
 
   <div class="container">
     <nav class="sidebar">
-      <h2>Menu Contábil</h2>
+      <h2>Menu Principal</h2>
       <ul>
         <li><a href="index.html"><i class="fas fa-home"></i> Início</a></li>
         <li><a href="tabela.html" class="active"><i class="fas fa-table"></i> Tabela Financeira</a></li>
         <li><a href="graficos.html"><i class="fas fa-chart-pie"></i> Gráficos</a></li>
+        <li><a href="#"><i class="fas fa-coins"></i> Investimentos</a></li>
+        <li><a href="#"><i class="fas fa-percentage"></i> Taxas e Juros</a></li>
+        <li><a href="#"><i class="fas fa-shopping-cart"></i> Controle de Compras</a></li>
       </ul>
     </nav>
 
@@ -26,7 +29,7 @@
       <!-- Cards do Balancete -->
       <div class="cards-summary">
         <div class="card assets">
-          <h4>Ativos (Caixa / Bancos)</h4>
+          <h4>Ativos (Caixa / Bancos / Bens)</h4>
           <div class="value" id="total-assets">R$ 0,00</div>
         </div>
         <div class="card liabilities">
@@ -45,7 +48,7 @@
 
       <!-- Formulário de Partida Dobrada -->
       <div class="form-container">
-        <h3><i class="fas fa-plus-circle"></i> Novo Lançamento Contábil</h3>
+        <h3><i class="fas fa-plus-circle"></i> Novo Lançamento de Partida Dobrada</h3>
         <form id="ledger-form" onsubmit="registrarLancamento(event)">
           <div class="form-grid">
             <div class="form-group">
@@ -53,50 +56,64 @@
               <input type="date" id="data" required>
             </div>
             <div class="form-group">
-              <label>Descrição</label>
-              <input type="text" id="descricao" placeholder="Ex: Mercado, Salário" required>
+              <label>Descrição do Lançamento</label>
+              <input type="text" id="descricao" placeholder="Ex: Combustível, Salário, Mercado" required>
             </div>
             <div class="form-group">
               <label>Valor (R$)</label>
-              <input type="number" step="0.01" id="valor" placeholder="0.00" required>
+              <input type="number" step="0.01" id="valor" placeholder="0,00" required>
             </div>
             <div class="form-group">
-              <label>Conta Origem (Crédito)</label>
+              <label>Conta Origem (Crédito - De onde sai)</label>
               <select id="conta-origem" required>
-                <optgroup label="Ativos (Saída de Dinheiro)">
-                  <option value="Ativos:Caixa">Ativos: Caixa</option>
-                  <option value="Ativos:Banco">Ativos: Conta Banco</option>
+                <optgroup label="1. ATIVOS (Saída de Dinheiro)">
+                  <option value="Ativos:Caixa">Ativos: Caixa Físico</option>
+                  <option value="Ativos:Banco">Ativos: Conta Bancária</option>
+                  <option value="Ativos:Investimentos">Ativos: Aplicações / Investimentos</option>
                 </optgroup>
-                <optgroup label="Passivos (Aumento de Dívida)">
+                <optgroup label="2. PASSIVOS (Aumento de Dívida / Obrigação)">
                   <option value="Passivos:Cartao">Passivos: Cartão de Crédito</option>
-                  <option value="Passivos:Emprestimo">Passivos: Empréstimo</option>
+                  <option value="Passivos:Emprestimo">Passivos: Empréstimo Bancário</option>
+                  <option value="Passivos:FinanciamentoVeiculo">Passivos: Financiamento de Veículo</option>
                 </optgroup>
-                <optgroup label="Receitas (Origem de Recurso)">
-                  <option value="Receitas:Salario">Receitas: Salário</option>
-                  <option value="Receitas:Investimentos">Receitas: Rendimentos</option>
+                <optgroup label="3. RECEITAS (Origem de Entrada)">
+                  <option value="Receitas:Salario">Receitas: Salário / Pró-labore</option>
+                  <option value="Receitas:Rendimentos">Receitas: Rendimentos / Juros</option>
+                  <option value="Receitas:Vendas">Receitas: Vendas / Serviços</option>
+                  <option value="Receitas:Outras">Receitas: Outras Receitas</option>
                 </optgroup>
               </select>
             </div>
             <div class="form-group">
-              <label>Conta Destino (Débito)</label>
+              <label>Conta Destino (Débito - Para onde vai)</label>
               <select id="conta-destino" required>
-                <optgroup label="Despesas (Aplicação de Recurso)">
-                  <option value="Despesas:Alimentacao">Despesas: Alimentação</option>
-                  <option value="Despesas:Moradia">Despesas: Moradia</option>
-                  <option value="Despesas:Transporte">Despesas: Transporte</option>
-                  <option value="Despesas:Lazer">Despesas: Lazer</option>
+                <optgroup label="4. DESPESAS (Aplicação de Recurso)">
+                  <option value="Despesas:Automovel:Combustivel">Despesas: Automóvel > Combustível</option>
+                  <option value="Despesas:Automovel:Manutencao">Despesas: Automóvel > Manutenção</option>
+                  <option value="Despesas:Automovel:Seguro">Despesas: Automóvel > Seguro / IPVA</option>
+                  <option value="Despesas:Moradia:Aluguel">Despesas: Moradia > Aluguel / Condomínio</option>
+                  <option value="Despesas:Moradia:Contas">Despesas: Moradia > Energia / Água / Internet</option>
+                  <option value="Despesas:Alimentacao:Supermercado">Despesas: Alimentação > Supermercado</option>
+                  <option value="Despesas:Alimentacao:Restaurante">Despesas: Alimentação > Restaurante</option>
+                  <option value="Despesas:Saude">Despesas: Saúde & Medicamentos</option>
+                  <option value="Despesas:Lazer">Despesas: Lazer & Entretenimento</option>
+                  <option value="Despesas:Educacao">Despesas: Educação & Cursos</option>
+                  <option value="Despesas:Tarifas">Despesas: Tarifas & Juros Bancários</option>
                 </optgroup>
-                <optgroup label="Ativos (Entrada de Dinheiro)">
-                  <option value="Ativos:Banco">Ativos: Conta Banco</option>
-                  <option value="Ativos:Caixa">Ativos: Caixa</option>
+                <optgroup label="1. ATIVOS (Entrada de Dinheiro / Aquisição)">
+                  <option value="Ativos:Banco">Ativos: Conta Bancária</option>
+                  <option value="Ativos:Caixa">Ativos: Caixa Físico</option>
+                  <option value="Ativos:Automovel">Ativos: Veículo / Automóvel (Ativo Imobilizado)</option>
+                  <option value="Ativos:Investimentos">Ativos: Aplicações / Investimentos</option>
                 </optgroup>
-                <optgroup label="Passivos (Pagamento de Dívida)">
-                  <option value="Passivos:Cartao">Passivos: Cartão de Crédito</option>
+                <optgroup label="2. PASSIVOS (Pagamento de Dívida)">
+                  <option value="Passivos:Cartao">Passivos: Fatura do Cartão de Crédito</option>
+                  <option value="Passivos:Emprestimo">Passivos: Quitação de Empréstimo</option>
                 </optgroup>
               </select>
             </div>
           </div>
-          <button type="submit" class="btn-primary" style="margin-top: 1rem;"><i class="fas fa-save"></i> Registrar Partida Dobrada</button>
+          <button type="submit" class="btn-primary" style="margin-top: 1.25rem;"><i class="fas fa-save"></i> Registrar Lançamento</button>
         </form>
       </div>
 
@@ -155,10 +172,10 @@
         tr.innerHTML = `
           <td>${l.data}</td>
           <td>${l.descricao}</td>
-          <td><span class="badge" style="background:#fee2e2; color:#991b1b; padding:3px 8px; border-radius:4px;">${l.origem}</span></td>
-          <td><span class="badge" style="background:#dcfce7; color:#166534; padding:3px 8px; border-radius:4px;">${l.destino}</span></td>
+          <td><span style="background:#fee2e2; color:#991b1b; padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight:600;">${l.origem}</span></td>
+          <td><span style="background:#dcfce7; color:#166534; padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight:600;">${l.destino}</span></td>
           <td><strong>R$ ${l.valor.toFixed(2).replace('.', ',')}</strong></td>
-          <td><button onclick="removerLancamento(${l.id})" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;"><i class="fas fa-trash"></i></button></td>
+          <td><button onclick="removerLancamento(${l.id})" style="background:#ef4444; color:white; border:none; padding:5px 9px; border-radius:4px; cursor:pointer;"><i class="fas fa-trash"></i></button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -168,7 +185,6 @@
       let assets = 0, liabilities = 0, income = 0, expenses = 0;
 
       lancamentos.forEach(l => {
-        // Regras de Partidas Dobradas
         if (l.destino.startsWith('Ativos')) assets += l.valor;
         if (l.origem.startsWith('Ativos')) assets -= l.valor;
 
@@ -185,7 +201,10 @@
       document.getElementById('total-expenses').textContent = `R$ ${expenses.toFixed(2).replace('.', ',')}`;
     }
 
-    window.onload = salvarEAtualizar;
+    window.onload = function() {
+      document.getElementById('data').valueAsDate = new Date();
+      salvarEAtualizar();
+    };
   </script>
 </body>
 </html>
