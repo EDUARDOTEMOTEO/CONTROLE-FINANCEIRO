@@ -2,35 +2,322 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Gestão Contábil - Painel Principal</title>
+  <title>Sistema de Gestão Contábil & Financeira</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Estilos Adicionais para Modais e Ações */
+    .top-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .btn-dropdown { background: #e2e8f0; border: none; padding: 0.5rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 1.1rem; }
+    .btn-dropdown:hover { background: #cbd5e1; }
+    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+    .modal-content { background: white; margin: 5% auto; padding: 1.5rem; border-radius: 8px; width: 90%; max-width: 650px; }
+    .close-modal { float: right; font-size: 1.5rem; cursor: pointer; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .badge-reconciled { background: #dcfce7; color: #15803d; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .badge-pending { background: #fef3c7; color: #b45309; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+  </style>
 </head>
 <body>
   <header>
     <h1><i class="fas fa-balance-scale"></i> Gestão Contábil & Financeira</h1>
   </header>
+
   <div class="container">
+    <!-- Menu Único Padronizado -->
     <nav class="sidebar">
       <h2>Menu Principal</h2>
       <ul>
-        <li><a href="index.html" class="active"><i class="fas fa-home"></i> Início</a></li>
-        <li><a href="tabela.html"><i class="fas fa-table"></i> Tabela Financeira</a></li>
-        <li><a href="graficos.html"><i class="fas fa-chart-pie"></i> Gráficos</a></li>
-        <li><a href="#"><i class="fas fa-coins"></i> Investimentos</a></li>
-        <li><a href="#"><i class="fas fa-percentage"></i> Taxas e Juros</a></li>
-        <li><a href="#"><i class="fas fa-shopping-cart"></i> Controle de Compras</a></li>
+        <li><a href="#" class="nav-link active" onclick="switchTab('tabela')"><i class="fas fa-table"></i> Tabela Financeira</a></li>
+        <li><a href="#" class="nav-link" onclick="switchTab('graficos')"><i class="fas fa-chart-pie"></i> Gráficos</a></li>
+        <li><a href="#" class="nav-link" onclick="switchTab('investimentos')"><i class="fas fa-coins"></i> Investimentos</a></li>
+        <li><a href="#" class="nav-link" onclick="switchTab('taxas')"><i class="fas fa-percentage"></i> Taxas e Juros</a></li>
+        <li><a href="#" class="nav-link" onclick="switchTab('compras')"><i class="fas fa-shopping-cart"></i> Controle de Compras</a></li>
       </ul>
     </nav>
+
     <main class="main-content">
-      <h2>Painel Principal de Controle</h2>
-      <p>Bem-vindo ao seu sistema de escrituração contábil por partidas dobradas.</p>
-      
-      <div style="margin-top: 2rem;">
-        <a href="tabela.html" class="btn-primary" style="text-decoration: none; padding: 10px 20px; display: inline-block;"><i class="fas fa-table"></i> Acessar Tabela Contábil</a>
+      <!-- Barra Superior de Livro Fiscal e Conciliação -->
+      <div class="top-actions">
+        <div>
+          <button class="btn-primary" onclick="abrirModalLivroFiscal()"><i class="fas fa-book"></i> Fechar Livro Fiscal do Período</button>
+          <button class="btn-primary" style="background:#475569;" onclick="abrirModalCategoria()"><i class="fas fa-folder-plus"></i> Nova Categoria / Conta</button>
+        </div>
+        <div>
+          <button class="btn-dropdown" onclick="abrirModalConciliacao()" title="Opções de Conciliação Bancária"><i class="fas fa-ellipsis-v"></i></button>
+        </div>
+      </div>
+
+      <!-- ABA 1: TABELA FINANCEIRA -->
+      <div id="tab-tabela" class="tab-content active">
+        <div class="cards-summary">
+          <div class="card assets">
+            <h4>Ativos (Caixa / Bancos / Bens)</h4>
+            <div class="value" id="total-assets">R$ 0,00</div>
+          </div>
+          <div class="card liabilities">
+            <h4>Passivos (Cartões / Dívidas)</h4>
+            <div class="value" id="total-liabilities">R$ 0,00</div>
+          </div>
+          <div class="card income">
+            <h4>Receitas Acumuladas</h4>
+            <div class="value" id="total-income">R$ 0,00</div>
+          </div>
+          <div class="card expenses">
+            <h4>Despesas Acumuladas</h4>
+            <div class="value" id="total-expenses">R$ 0,00</div>
+          </div>
+        </div>
+
+        <div class="form-container">
+          <h3><i class="fas fa-plus-circle"></i> Novo Lançamento de Partida Dobrada</h3>
+          <form id="ledger-form" onsubmit="registrarLancamento(event)">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Data</label>
+                <input type="date" id="data" required>
+              </div>
+              <div class="form-group">
+                <label>Descrição do Lançamento</label>
+                <input type="text" id="descricao" placeholder="Ex: Mercado, Salário" required>
+              </div>
+              <div class="form-group">
+                <label>Valor (R$)</label>
+                <input type="number" step="0.01" id="valor" placeholder="0,00" required>
+              </div>
+              <div class="form-group">
+                <label>Conta Origem (Crédito - De onde sai)</label>
+                <select id="conta-origem" required></select>
+              </div>
+              <div class="form-group">
+                <label>Conta Destino (Débito - Para onde vai)</label>
+                <select id="conta-destino" required></select>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 1.25rem;"><i class="fas fa-save"></i> Registrar Lançamento</button>
+          </form>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descrição</th>
+              <th>Origem (Crédito)</th>
+              <th>Destino (Débito)</th>
+              <th>Valor</th>
+              <th>Conciliado</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-corpo"></tbody>
+        </table>
+      </div>
+
+      <!-- OUTRAS ABAS (MANTÊM A MESMA ESTRUTURA SEM BUGAR) -->
+      <div id="tab-graficos" class="tab-content">
+        <h2><i class="fas fa-chart-pie"></i> Relatórios e Gráficos Contábeis</h2>
+        <p>Visão gráfica do balancete de verificação e fluxo de caixa.</p>
+      </div>
+
+      <div id="tab-investimentos" class="tab-content">
+        <h2><i class="fas fa-coins"></i> Carteira de Investimentos</h2>
+        <p>Acompanhamento de ativos financeiros e rentabilidade.</p>
+      </div>
+
+      <div id="tab-taxas" class="tab-content">
+        <h2><i class="fas fa-percentage"></i> Calculadora de Taxas e Juros</h2>
+        <p>Simulações de juros compostos e amortizações.</p>
+      </div>
+
+      <div id="tab-compras" class="tab-content">
+        <h2><i class="fas fa-shopping-cart"></i> Controle de Compras</h2>
+        <p>Ordens de compra e cotações de fornecedores.</p>
       </div>
     </main>
   </div>
+
+  <!-- MODAL 1: CONCILIAÇÃO BANCÁRIA (...) -->
+  <div id="modal-conciliacao" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="fecharModais()">&times;</span>
+      <h3><i class="fas fa-tasks"></i> Conciliação Bancária</h3>
+      <p>Marque os lançamentos conferidos com seu extrato bancário:</p>
+      <div id="lista-conciliacao" style="max-height: 300px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: CRIAR CATEGORIA / CONTA -->
+  <div id="modal-categoria" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="fecharModais()">&times;</span>
+      <h3><i class="fas fa-folder-plus"></i> Adicionar Nova Categoria / Conta</h3>
+      <form onsubmit="adicionarCategoria(event)">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>Grupo Contábil</label>
+          <select id="nova-cat-grupo" required>
+            <option value="Ativos">1. Ativos</option>
+            <option value="Passivos">2. Passivos</option>
+            <option value="Receitas">3. Receitas</option>
+            <option value="Despesas">4. Despesas</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>Nome da Conta Contábil</label>
+          <input type="text" id="nova-cat-nome" placeholder="Ex: Automóvel > Licenciamento" required>
+        </div>
+        <button type="submit" class="btn-primary">Cadastrar Conta</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Gerenciamento de Estado
+    let lancamentos = JSON.parse(localStorage.getItem('partidas_dobradas')) || [];
+    let contasCustomizadas = JSON.parse(localStorage.getItem('contas_custom')) || [
+      { grupo: 'Ativos', nome: 'Ativos:Caixa' },
+      { grupo: 'Ativos', nome: 'Ativos:Banco' },
+      { grupo: 'Passivos', nome: 'Passivos:Cartao' },
+      { grupo: 'Receitas', nome: 'Receitas:Salario' },
+      { grupo: 'Despesas', nome: 'Despesas:Alimentacao' },
+      { grupo: 'Despesas:Automovel', nome: 'Despesas:Automovel:Combustivel' },
+      { grupo: 'Despesas:Moradia', nome: 'Despesas:Moradia:Aluguel' }
+    ];
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+
+    function popularSelects() {
+      const orig = document.getElementById('conta-origem');
+      const dest = document.getElementById('conta-destino');
+      orig.innerHTML = ''; dest.innerHTML = '';
+
+      contasCustomizadas.forEach(c => {
+        const opt1 = new Option(c.nome, c.nome);
+        const opt2 = new Option(c.nome, c.nome);
+        orig.add(opt1);
+        dest.add(opt2);
+      });
+    }
+
+    function registrarLancamento(event) {
+      event.preventDefault();
+      const novo = {
+        id: Date.now(),
+        data: document.getElementById('data').value,
+        descricao: document.getElementById('descricao').value,
+        valor: parseFloat(document.getElementById('valor').value),
+        origem: document.getElementById('conta-origem').value,
+        destino: document.getElementById('conta-destino').value,
+        conciliado: false
+      };
+      lancamentos.push(novo);
+      salvarEAtualizar();
+      document.getElementById('ledger-form').reset();
+    }
+
+    function alternarConciliacao(id) {
+      const item = lancamentos.find(l => l.id === id);
+      if (item) item.conciliado = !item.conciliado;
+      salvarEAtualizar();
+      abrirModalConciliacao();
+    }
+
+    function abrirModalLivroFiscal() {
+      const pendentes = lancamentos.filter(l => !l.conciliado);
+      if (pendentes.length > 0) {
+        alert(`Atenção: Existem ${pendentes.length} lançamento(s) pendente(s) de conciliação bancária. Realize a conciliação completa no menu (...) antes de fechar o livro fiscal.`);
+      } else {
+        alert("Livro Fiscal e Diário Contábil gerados com sucesso para o período! Todos os lançamentos estão validados e conciliados.");
+      }
+    }
+
+    function adicionarCategoria(e) {
+      e.preventDefault();
+      const grupo = document.getElementById('nova-cat-grupo').value;
+      const nome = grupo + ':' + document.getElementById('nova-cat-nome').value.replace(/\s+/g, '');
+      contasCustomizadas.push({ grupo, nome });
+      localStorage.setItem('contas_custom', JSON.stringify(contasCustomizadas));
+      popularSelects();
+      fecharModais();
+    }
+
+    function salvarEAtualizar() {
+      localStorage.setItem('partidas_dobradas', JSON.stringify(lancamentos));
+      renderizarTabela();
+      calcularBalancete();
+    }
+
+    function renderizarTabela() {
+      const tbody = document.getElementById('tabela-corpo');
+      tbody.innerHTML = '';
+      lancamentos.forEach(l => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${l.data}</td>
+          <td>${l.descricao}</td>
+          <td><span style="background:#fee2e2; color:#991b1b; padding:3px 6px; border-radius:4px;">${l.origem}</span></td>
+          <td><span style="background:#dcfce7; color:#166534; padding:3px 6px; border-radius:4px;">${l.destino}</span></td>
+          <td><strong>R$ ${l.valor.toFixed(2).replace('.', ',')}</strong></td>
+          <td>${l.conciliado ? '<span class="badge-reconciled">Sim</span>' : '<span class="badge-pending">Pendente</span>'}</td>
+          <td><button onclick="removerLancamento(${l.id})" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;"><i class="fas fa-trash"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function calcularBalancete() {
+      let assets = 0, liabilities = 0, income = 0, expenses = 0;
+      lancamentos.forEach(l => {
+        if (l.destino.startsWith('Ativos')) assets += l.valor;
+        if (l.origem.startsWith('Ativos')) assets -= l.valor;
+        if (l.destino.startsWith('Passivos')) liabilities -= l.valor;
+        if (l.origem.startsWith('Passivos')) liabilities += l.valor;
+        if (l.origem.startsWith('Receitas')) income += l.valor;
+        if (l.destino.startsWith('Despesas')) expenses += l.valor;
+      });
+      document.getElementById('total-assets').textContent = `R$ ${assets.toFixed(2).replace('.', ',')}`;
+      document.getElementById('total-liabilities').textContent = `R$ ${liabilities.toFixed(2).replace('.', ',')}`;
+      document.getElementById('total-income').textContent = `R$ ${income.toFixed(2).replace('.', ',')}`;
+      document.getElementById('total-expenses').textContent = `R$ ${expenses.toFixed(2).replace('.', ',')}`;
+    }
+
+    function removerLancamento(id) {
+      lancamentos = lancamentos.filter(l => l.id !== id);
+      salvarEAtualizar();
+    }
+
+    function abrirModalConciliacao() {
+      const container = document.getElementById('lista-conciliacao');
+      container.innerHTML = '';
+      lancamentos.forEach(l => {
+        const div = document.createElement('div');
+        div.style = "display:flex; justify-between:space-between; align-items:center; padding: 0.5rem 0; border-bottom:1px solid #eee;";
+        div.innerHTML = `
+          <span>${l.data} - ${l.descricao} (R$ ${l.valor.toFixed(2)})</span>
+          <button onclick="alternarConciliacao(${l.id})" style="background:${l.conciliado ? '#10b981' : '#f59e0b'}; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">
+            ${l.conciliado ? 'Conciliado ✓' : 'Conciliar'}
+          </button>
+        `;
+        container.appendChild(div);
+      });
+      document.getElementById('modal-conciliacao').style.display = 'block';
+    }
+
+    function abrirModalCategoria() { document.getElementById('modal-categoria').style.display = 'block'; }
+    function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+
+    window.onload = function() {
+      document.getElementById('data').valueAsDate = new Date();
+      popularSelects();
+      salvarEAtualizar();
+    };
+  </script>
 </body>
 </html>
