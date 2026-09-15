@@ -93,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
 function popularFiltroLivros() {
   const select = document.getElementById('select-livro-filtro');
+  if (!select) return;
   select.innerHTML = '<option value="atual">Livro Fiscal Ativo (Em Aberto)</option>';
   state.livrosFiscais.forEach((l, idx) => {
     select.add(new Option(`Livro Fiscal #${state.livrosFiscais.length - idx} (${l.dataFechamento})`, l.id));
