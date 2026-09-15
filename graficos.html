@@ -1,33 +1,50 @@
-import pandas as pd
-import plotly.express as px
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gráficos - Controle Financeiro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>📈 Painel de Gráficos</h1>
+  </header>
+  <div class="container">
+    <nav class="sidebar">
+      <h2>Menu</h2>
+      <ul>
+        <li><a href="index.html">🏠 Início</a></li>
+        <li><a href="tabela.html">📋 Tabela Financeira</a></li>
+        <li><a href="graficos.html" class="active">📈 Gráficos</a></li>
+      </ul>
+    </nav>
+    <main class="main-content">
+      <div id="chart-pie"></div>
+    </main>
+  </div>
+  <script>
+    const dados = JSON.parse(localStorage.getItem("dados_tabela")) || [];
+    let entradas = 0;
+    let saidas = 0;
 
-# Lê a tabela de lançamentos
-df = pd.read_html("tabela.html")[0]
+    dados.forEach(row => {
+      const tipo = (row[3] || "").toLowerCase();
+      const val = parseFloat((row[4] || "0").replace("R$", "").replace(",", ".")) || 0;
+      if (tipo === "entrada") entradas += val;
+      if (tipo === "saída" || tipo === "saida") saidas += val;
+    });
 
-# Limpa e converte os dados
-df["Valor (R$)"] = pd.to_numeric(df["Valor (R$)"], errors="coerce")
-df["Despesas"] = pd.to_numeric(df["Despesas"], errors="coerce")
-df["Data"] = pd.to_datetime(df["Data"], errors="coerce")
-df = df.dropna(subset=["Data", "Tipo", "Valor (R$)", "Despesas", "Categoria"])
+    const dataPie = [{
+      values: [entradas, saidas],
+      labels: ['Entradas', 'Saídas'],
+      type: 'pie',
+      marker: { colors: ['#27ae60', '#c0392b'] }
+    }];
 
-# Filtra entradas e saídas
-df_entrada = df[df["Tipo"].str.lower() == "entrada"]
-df_saida = df[df["Tipo"].str.lower().isin(["saída", "saida"])]
-
-# Gráfico de barras por categoria de despesa
-bar = px.bar(df_saida.groupby("Categoria", as_index=False).sum(),
-             x="Categoria", y="Despesas",
-             title="💸 Despesas por Categoria")
-bar.write_html("bar_categoria.html")
-
-# Gráfico de linha temporal de lançamentos
-linha = px.line(df.groupby(["Data", "Tipo"], as_index=False).sum(),
-                x="Data", y="Valor (R$)", color="Tipo",
-                title="📆 Fluxo Financeiro ao Longo do Tempo",
-                markers=True)
-linha.write_html("linha_temporal.html")
-
-# Gráfico de pizza: entradas vs saídas
-pizza = px.pie(df, names="Tipo", values="Valor (R$)",
-               title="🧾 Entradas vs Saídas")
-pizza.write_html("pizza_movimento.html")
+    const layout = { title: 'Entradas vs Saídas (Resumo do LocalStorage)' };
+    Plotly.newPlot('chart-pie', dataPie, layout);
+  </script>
+</body>
+</html>
