@@ -7,17 +7,18 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Estilos Adicionais para Modais e Ações */
-    .top-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-    .btn-dropdown { background: #e2e8f0; border: none; padding: 0.5rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 1.1rem; }
+    .top-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
+    .btn-dropdown { background: #e2e8f0; border: none; padding: 0.6rem 0.9rem; border-radius: 6px; cursor: pointer; font-size: 1.1rem; }
     .btn-dropdown:hover { background: #cbd5e1; }
-    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-    .modal-content { background: white; margin: 5% auto; padding: 1.5rem; border-radius: 8px; width: 90%; max-width: 650px; }
+    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); overflow-y: auto; }
+    .modal-content { background: white; margin: 3% auto; padding: 1.5rem; border-radius: 8px; width: 90%; max-width: 750px; }
     .close-modal { float: right; font-size: 1.5rem; cursor: pointer; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .badge-reconciled { background: #dcfce7; color: #15803d; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
     .badge-pending { background: #fef3c7; color: #b45309; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .reconcile-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
+    .book-history-card { background: #fff; border: 1px solid #cbd5e1; padding: 1rem; border-radius: 6px; margin-bottom: 0.75rem; }
   </style>
 </head>
 <body>
@@ -26,12 +27,12 @@
   </header>
 
   <div class="container">
-    <!-- Menu Único Padronizado -->
     <nav class="sidebar">
       <h2>Menu Principal</h2>
       <ul>
         <li><a href="#" class="nav-link active" onclick="switchTab('tabela')"><i class="fas fa-table"></i> Tabela Financeira</a></li>
-        <li><a href="#" class="nav-link" onclick="switchTab('graficos')"><i class="fas fa-chart-pie"></i> Gráficos</a></li>
+        <li><a href="#" class="nav-link" onclick="switchTab('livros')"><i class="fas fa-book-journal-whills"></i> Livros Fiscais</a></li>
+        <li><a href="#" class="nav-link" onclick="switchTab('graficos')"><i class="fas fa-chart-pie"></i> Gráficos & DRE</a></li>
         <li><a href="#" class="nav-link" onclick="switchTab('investimentos')"><i class="fas fa-coins"></i> Investimentos</a></li>
         <li><a href="#" class="nav-link" onclick="switchTab('taxas')"><i class="fas fa-percentage"></i> Taxas e Juros</a></li>
         <li><a href="#" class="nav-link" onclick="switchTab('compras')"><i class="fas fa-shopping-cart"></i> Controle de Compras</a></li>
@@ -39,14 +40,15 @@
     </nav>
 
     <main class="main-content">
-      <!-- Barra Superior de Livro Fiscal e Conciliação -->
+      <!-- Barra Superior -->
       <div class="top-actions">
-        <div>
-          <button class="btn-primary" onclick="abrirModalLivroFiscal()"><i class="fas fa-book"></i> Fechar Livro Fiscal do Período</button>
-          <button class="btn-primary" style="background:#475569;" onclick="abrirModalCategoria()"><i class="fas fa-folder-plus"></i> Nova Categoria / Conta</button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn-primary" onclick="encerrarEGerarLivroFiscal()"><i class="fas fa-lock"></i> Fechar Livro Fiscal</button>
+          <button class="btn-primary" style="background:#0284c7;" onclick="abrirModalConciliacao()"><i class="fas fa-check-double"></i> Conciliação Bancária</button>
+          <button class="btn-primary" style="background:#475569;" onclick="abrirModalCategoria()"><i class="fas fa-folder-plus"></i> Nova Conta</button>
         </div>
         <div>
-          <button class="btn-dropdown" onclick="abrirModalConciliacao()" title="Opções de Conciliação Bancária"><i class="fas fa-ellipsis-v"></i></button>
+          <button class="btn-dropdown" onclick="abrirModalConfiguracoes()" title="Backup & Opções"><i class="fas fa-ellipsis-v"></i></button>
         </div>
       </div>
 
@@ -54,25 +56,29 @@
       <div id="tab-tabela" class="tab-content active">
         <div class="cards-summary">
           <div class="card assets">
-            <h4>Ativos (Caixa / Bancos / Bens)</h4>
+            <h4>Ativos (Caixa / Bancos)</h4>
             <div class="value" id="total-assets">R$ 0,00</div>
           </div>
           <div class="card liabilities">
-            <h4>Passivos (Cartões / Dívidas)</h4>
+            <h4>Passivos (Dívidas)</h4>
             <div class="value" id="total-liabilities">R$ 0,00</div>
           </div>
           <div class="card income">
-            <h4>Receitas Acumuladas</h4>
+            <h4>Receitas</h4>
             <div class="value" id="total-income">R$ 0,00</div>
           </div>
           <div class="card expenses">
-            <h4>Despesas Acumuladas</h4>
+            <h4>Despesas</h4>
             <div class="value" id="total-expenses">R$ 0,00</div>
+          </div>
+          <div class="card" style="border-left-color: #8b5cf6;">
+            <h4>Resultado (DRE)</h4>
+            <div class="value" id="total-dre">R$ 0,00</div>
           </div>
         </div>
 
         <div class="form-container">
-          <h3><i class="fas fa-plus-circle"></i> Novo Lançamento de Partida Dobrada</h3>
+          <h3><i class="fas fa-plus-circle"></i> Novo Lançamento Contábil</h3>
           <form id="ledger-form" onsubmit="registrarLancamento(event)">
             <div class="form-grid">
               <div class="form-group">
@@ -80,7 +86,7 @@
                 <input type="date" id="data" required>
               </div>
               <div class="form-group">
-                <label>Descrição do Lançamento</label>
+                <label>Descrição</label>
                 <input type="text" id="descricao" placeholder="Ex: Mercado, Salário" required>
               </div>
               <div class="form-group">
@@ -88,15 +94,15 @@
                 <input type="number" step="0.01" id="valor" placeholder="0,00" required>
               </div>
               <div class="form-group">
-                <label>Conta Origem (Crédito - De onde sai)</label>
+                <label>Conta Origem (Crédito)</label>
                 <select id="conta-origem" required></select>
               </div>
               <div class="form-group">
-                <label>Conta Destino (Débito - Para onde vai)</label>
+                <label>Conta Destino (Débito)</label>
                 <select id="conta-destino" required></select>
               </div>
             </div>
-            <button type="submit" class="btn-primary" style="margin-top: 1.25rem;"><i class="fas fa-save"></i> Registrar Lançamento</button>
+            <button type="submit" class="btn-primary" style="margin-top: 1.25rem;"><i class="fas fa-save"></i> Registrar Partida Dobrada</button>
           </form>
         </div>
 
@@ -108,7 +114,7 @@
               <th>Origem (Crédito)</th>
               <th>Destino (Débito)</th>
               <th>Valor</th>
-              <th>Conciliado</th>
+              <th>Status Conciliação</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -116,44 +122,52 @@
         </table>
       </div>
 
-      <!-- OUTRAS ABAS (MANTÊM A MESMA ESTRUTURA SEM BUGAR) -->
+      <!-- ABA 2: HISTÓRICO DE LIVROS FISCAIS -->
+      <div id="tab-livros" class="tab-content">
+        <h2><i class="fas fa-book-journal-whills"></i> Histórico de Livros Fiscais Fechados</h2>
+        <p>Registro histórico de encerramentos contábeis e balancetes validados.</p>
+        <div id="historico-livros-container"></div>
+      </div>
+
       <div id="tab-graficos" class="tab-content">
-        <h2><i class="fas fa-chart-pie"></i> Relatórios e Gráficos Contábeis</h2>
-        <p>Visão gráfica do balancete de verificação e fluxo de caixa.</p>
+        <h2><i class="fas fa-chart-pie"></i> Demonstrações Financeiras</h2>
+        <p>Visão gerencial da DRE e evolução patrimonial.</p>
       </div>
 
-      <div id="tab-investimentos" class="tab-content">
-        <h2><i class="fas fa-coins"></i> Carteira de Investimentos</h2>
-        <p>Acompanhamento de ativos financeiros e rentabilidade.</p>
-      </div>
-
-      <div id="tab-taxas" class="tab-content">
-        <h2><i class="fas fa-percentage"></i> Calculadora de Taxas e Juros</h2>
-        <p>Simulações de juros compostos e amortizações.</p>
-      </div>
-
-      <div id="tab-compras" class="tab-content">
-        <h2><i class="fas fa-shopping-cart"></i> Controle de Compras</h2>
-        <p>Ordens de compra e cotações de fornecedores.</p>
-      </div>
+      <div id="tab-investimentos" class="tab-content"><h2><i class="fas fa-coins"></i> Investimentos</h2></div>
+      <div id="tab-taxas" class="tab-content"><h2><i class="fas fa-percentage"></i> Taxas e Juros</h2></div>
+      <div id="tab-compras" class="tab-content"><h2><i class="fas fa-shopping-cart"></i> Controle de Compras</h2></div>
     </main>
   </div>
 
-  <!-- MODAL 1: CONCILIAÇÃO BANCÁRIA (...) -->
+  <!-- MODAL: CONCILIAÇÃO BANCÁRIA PARITÁRIA -->
   <div id="modal-conciliacao" class="modal">
     <div class="modal-content">
       <span class="close-modal" onclick="fecharModais()">&times;</span>
-      <h3><i class="fas fa-tasks"></i> Conciliação Bancária</h3>
-      <p>Marque os lançamentos conferidos com seu extrato bancário:</p>
-      <div id="lista-conciliacao" style="max-height: 300px; overflow-y: auto;"></div>
+      <h3><i class="fas fa-check-double"></i> Conciliação Bancária por Paridade</h3>
+      <p style="font-size: 0.85rem; color: #64748b;">Para validar uma conciliação real, selecione um lançamento de SAÍDA e outro de ENTRADA correspondente. Os valores precisam coincidir exatamente.</p>
+      
+      <div class="reconcile-box">
+        <form onsubmit="executarConciliacaoParitaria(event)">
+          <div class="form-group" style="margin-bottom:0.75rem;">
+            <label>Lançamento de Origem / Saída</label>
+            <select id="concil-saida" required></select>
+          </div>
+          <div class="form-group" style="margin-bottom:0.75rem;">
+            <label>Lançamento de Destino / Entrada</label>
+            <select id="concil-entrada" required></select>
+          </div>
+          <button type="submit" class="btn-primary" style="background:#10b981; width:100%;">Validar e Conciliar Lançamentos</button>
+        </form>
+      </div>
     </div>
   </div>
 
-  <!-- MODAL 2: CRIAR CATEGORIA / CONTA -->
+  <!-- MODAL: NOVA CONTA -->
   <div id="modal-categoria" class="modal">
     <div class="modal-content">
       <span class="close-modal" onclick="fecharModais()">&times;</span>
-      <h3><i class="fas fa-folder-plus"></i> Adicionar Nova Categoria / Conta</h3>
+      <h3><i class="fas fa-folder-plus"></i> Adicionar Nova Conta Contábil</h3>
       <form onsubmit="adicionarCategoria(event)">
         <div class="form-group" style="margin-bottom: 1rem;">
           <label>Grupo Contábil</label>
@@ -166,24 +180,37 @@
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
           <label>Nome da Conta Contábil</label>
-          <input type="text" id="nova-cat-nome" placeholder="Ex: Automóvel > Licenciamento" required>
+          <input type="text" id="nova-cat-nome" placeholder="Ex: Automovel:Seguro" required>
         </div>
         <button type="submit" class="btn-primary">Cadastrar Conta</button>
       </form>
     </div>
   </div>
 
+  <!-- MODAL: BACKUP E CONFIGURAÇÕES (...) -->
+  <div id="modal-configuracoes" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="fecharModais()">&times;</span>
+      <h3><i class="fas fa-cog"></i> Gerenciamento de Dados & Backup</h3>
+      <div style="display:flex; flex-direction:column; gap:10px; margin-top:1rem;">
+        <button class="btn-primary" onclick="exportarBackup()"><i class="fas fa-download"></i> Exportar Backup de Dados (JSON)</button>
+        <button class="btn-primary" style="background:#64748b;" onclick="document.getElementById('import-file').click()"><i class="fas fa-upload"></i> Importar Backup de Dados</button>
+        <input type="file" id="import-file" style="display:none;" onchange="importarBackup(event)">
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Gerenciamento de Estado
     let lancamentos = JSON.parse(localStorage.getItem('partidas_dobradas')) || [];
+    let livrosFiscais = JSON.parse(localStorage.getItem('livros_fiscais')) || [];
     let contasCustomizadas = JSON.parse(localStorage.getItem('contas_custom')) || [
       { grupo: 'Ativos', nome: 'Ativos:Caixa' },
       { grupo: 'Ativos', nome: 'Ativos:Banco' },
       { grupo: 'Passivos', nome: 'Passivos:Cartao' },
       { grupo: 'Receitas', nome: 'Receitas:Salario' },
       { grupo: 'Despesas', nome: 'Despesas:Alimentacao' },
-      { grupo: 'Despesas:Automovel', nome: 'Despesas:Automovel:Combustivel' },
-      { grupo: 'Despesas:Moradia', nome: 'Despesas:Moradia:Aluguel' }
+      { grupo: 'Despesas', nome: 'Despesas:Automovel:Combustivel' },
+      { grupo: 'Despesas', nome: 'Despesas:Moradia:Aluguel' }
     ];
 
     function switchTab(tabId) {
@@ -191,51 +218,139 @@
       document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
       document.getElementById('tab-' + tabId).classList.add('active');
       event.currentTarget.classList.add('active');
+      if (tabId === 'livros') renderizarHistoricoLivros();
     }
 
     function popularSelects() {
       const orig = document.getElementById('conta-origem');
       const dest = document.getElementById('conta-destino');
       orig.innerHTML = ''; dest.innerHTML = '';
-
       contasCustomizadas.forEach(c => {
-        const opt1 = new Option(c.nome, c.nome);
-        const opt2 = new Option(c.nome, c.nome);
-        orig.add(opt1);
-        dest.add(opt2);
+        orig.add(new Option(c.nome, c.nome));
+        dest.add(new Option(c.nome, c.nome));
       });
     }
 
     function registrarLancamento(event) {
       event.preventDefault();
+      const orig = document.getElementById('conta-origem').value;
+      const dest = document.getElementById('conta-destino').value;
+
+      if (orig === dest) {
+        alert("Erro Contábil: A conta de Origem e Destino não podem ser a mesma!");
+        return;
+      }
+
       const novo = {
         id: Date.now(),
         data: document.getElementById('data').value,
         descricao: document.getElementById('descricao').value,
         valor: parseFloat(document.getElementById('valor').value),
-        origem: document.getElementById('conta-origem').value,
-        destino: document.getElementById('conta-destino').value,
-        conciliado: false
+        origem: orig,
+        destino: dest,
+        conciliado: false,
+        conciliadoCom: null
       };
       lancamentos.push(novo);
       salvarEAtualizar();
       document.getElementById('ledger-form').reset();
     }
 
-    function alternarConciliacao(id) {
-      const item = lancamentos.find(l => l.id === id);
-      if (item) item.conciliado = !item.conciliado;
-      salvarEAtualizar();
-      abrirModalConciliacao();
+    function abrirModalConciliacao() {
+      const selectSaida = document.getElementById('concil-saida');
+      const selectEntrada = document.getElementById('concil-entrada');
+      selectSaida.innerHTML = ''; selectEntrada.innerHTML = '';
+
+      const pendentes = lancamentos.filter(l => !l.conciliado);
+      if (pendentes.length < 2) {
+        alert("São necessários pelo menos 2 lançamentos pendentes para realizar a conciliação paritária.");
+        return;
+      }
+
+      pendentes.forEach(l => {
+        const txt = `${l.data} | ${l.descricao} - R$ ${l.valor.toFixed(2)} (${l.origem} -> ${l.destino})`;
+        selectSaida.add(new Option(txt, l.id));
+        selectEntrada.add(new Option(txt, l.id));
+      });
+
+      document.getElementById('modal-conciliacao').style.display = 'block';
     }
 
-    function abrirModalLivroFiscal() {
+    function executarConciliacaoParitaria(e) {
+      e.preventDefault();
+      const idSaida = parseInt(document.getElementById('concil-saida').value);
+      const idEntrada = parseInt(document.getElementById('concil-entrada').value);
+
+      if (idSaida === idEntrada) {
+        alert("Selecione dois lançamentos diferentes para realizar a conciliação!");
+        return;
+      }
+
+      const l1 = lancamentos.find(l => l.id === idSaida);
+      const l2 = lancamentos.find(l => l.id === idEntrada);
+
+      // Validação Contábil: O valor deve bater obrigatoriamente
+      if (Math.abs(l1.valor - l2.valor) > 0.001) {
+        alert(`FALHA NA CONCILIAÇÃO: Os valores não coincidem! (R$ ${l1.valor.toFixed(2)} vs R$ ${l2.valor.toFixed(2)}). A conciliação foi rejeitada para evitar inconsistência contábil.`);
+        return;
+      }
+
+      l1.conciliado = true;
+      l1.conciliadoCom = l2.id;
+      l2.conciliado = true;
+      l2.conciliadoCom = l1.id;
+
+      salvarEAtualizar();
+      fecharModais();
+      alert("Conciliação Bancária realizada e validada com sucesso!");
+    }
+
+    function encerrarEGerarLivroFiscal() {
       const pendentes = lancamentos.filter(l => !l.conciliado);
       if (pendentes.length > 0) {
-        alert(`Atenção: Existem ${pendentes.length} lançamento(s) pendente(s) de conciliação bancária. Realize a conciliação completa no menu (...) antes de fechar o livro fiscal.`);
-      } else {
-        alert("Livro Fiscal e Diário Contábil gerados com sucesso para o período! Todos os lançamentos estão validados e conciliados.");
+        alert(`BLOQUEIO FISCAL: Existem ${pendentes.length} lançamento(s) pendentes de conciliação bancária. Realize a conciliação antes de encerrar o livro.`);
+        return;
       }
+
+      if (lancamentos.length === 0) {
+        alert("Não existem lançamentos para encerramento fiscal.");
+        return;
+      }
+
+      const novoLivro = {
+        id: Date.now(),
+        dataFechamento: new Date().toLocaleString('pt-BR'),
+        qtdLancamentos: lancamentos.length,
+        totalAtivos: document.getElementById('total-assets').textContent,
+        totalPassivos: document.getElementById('total-liabilities').textContent,
+        resultadoDRE: document.getElementById('total-dre').textContent,
+        registros: JSON.parse(JSON.stringify(lancamentos))
+      };
+
+      livrosFiscais.push(novoLivro);
+      localStorage.setItem('livros_fiscais', JSON.stringify(livrosFiscais));
+      alert("LIVRO FISCAL FECHADO COM SUCESSO! O relatório foi gravado no histórico.");
+    }
+
+    function renderizarHistoricoLivros() {
+      const container = document.getElementById('historico-livros-container');
+      container.innerHTML = '';
+
+      if (livrosFiscais.length === 0) {
+        container.innerHTML = '<p>Nenhum livro fiscal foi encerrado ainda.</p>';
+        return;
+      }
+
+      livrosFiscais.forEach((livro, index) => {
+        const div = document.createElement('div');
+        div.className = 'book-history-card';
+        div.innerHTML = `
+          <h4><i class="fas fa-book"></i> Livro Fiscal #${livrosFiscais.length - index} - Encerrado em ${livro.dataFechamento}</h4>
+          <p><strong>Lançamentos Auditados:</strong> ${livro.qtdLancamentos} | <strong>Ativos:</strong> ${livro.totalAtivos} | <strong>Resultado DRE:</strong> ${livro.resultadoDRE}</p>
+          <button class="btn-primary" style="padding:4px 8px; font-size:0.8rem;" onclick='alert(JSON.stringify(${JSON.stringify(livro.registros)}, null, 2))'>Visualizar Detalhes do Livro</button>
+        `;
+        container.appendChild(div);
+      });
     }
 
     function adicionarCategoria(e) {
@@ -246,6 +361,32 @@
       localStorage.setItem('contas_custom', JSON.stringify(contasCustomizadas));
       popularSelects();
       fecharModais();
+    }
+
+    function exportarBackup() {
+      const data = { lancamentos, livrosFiscais, contasCustomizadas };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `backup_contabil_${Date.now()}.json`;
+      a.click();
+    }
+
+    function importarBackup(e) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const data = JSON.parse(event.target.result);
+          if (data.lancamentos) {
+            lancamentos = data.lancamentos;
+            livrosFiscais = data.livrosFiscais || [];
+            contasCustomizadas = data.contasCustomizadas || contasCustomizadas;
+            salvarEAtualizar();
+            alert("Backup importado com sucesso!");
+          }
+        } catch (err) { alert("Arquivo de backup inválido."); }
+      };
+      reader.readAsText(e.target.files[0]);
     }
 
     function salvarEAtualizar() {
@@ -262,10 +403,10 @@
         tr.innerHTML = `
           <td>${l.data}</td>
           <td>${l.descricao}</td>
-          <td><span style="background:#fee2e2; color:#991b1b; padding:3px 6px; border-radius:4px;">${l.origem}</span></td>
-          <td><span style="background:#dcfce7; color:#166534; padding:3px 6px; border-radius:4px;">${l.destino}</span></td>
+          <td><span style="background:#fee2e2; color:#991b1b; padding:3px 6px; border-radius:4px; font-size:0.8rem;">${l.origem}</span></td>
+          <td><span style="background:#dcfce7; color:#166534; padding:3px 6px; border-radius:4px; font-size:0.8rem;">${l.destino}</span></td>
           <td><strong>R$ ${l.valor.toFixed(2).replace('.', ',')}</strong></td>
-          <td>${l.conciliado ? '<span class="badge-reconciled">Sim</span>' : '<span class="badge-pending">Pendente</span>'}</td>
+          <td>${l.conciliado ? '<span class="badge-reconciled">Conciliado ✓</span>' : '<span class="badge-pending">Pendente</span>'}</td>
           <td><button onclick="removerLancamento(${l.id})" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;"><i class="fas fa-trash"></i></button></td>
         `;
         tbody.appendChild(tr);
@@ -282,35 +423,26 @@
         if (l.origem.startsWith('Receitas')) income += l.valor;
         if (l.destino.startsWith('Despesas')) expenses += l.valor;
       });
+
+      const dre = income - expenses;
+
       document.getElementById('total-assets').textContent = `R$ ${assets.toFixed(2).replace('.', ',')}`;
       document.getElementById('total-liabilities').textContent = `R$ ${liabilities.toFixed(2).replace('.', ',')}`;
       document.getElementById('total-income').textContent = `R$ ${income.toFixed(2).replace('.', ',')}`;
       document.getElementById('total-expenses').textContent = `R$ ${expenses.toFixed(2).replace('.', ',')}`;
+      document.getElementById('total-dre').textContent = `R$ ${dre.toFixed(2).replace('.', ',')}`;
+      document.getElementById('total-dre').style.color = dre >= 0 ? '#10b981' : '#ef4444';
     }
 
     function removerLancamento(id) {
-      lancamentos = lancamentos.filter(l => l.id !== id);
-      salvarEAtualizar();
-    }
-
-    function abrirModalConciliacao() {
-      const container = document.getElementById('lista-conciliacao');
-      container.innerHTML = '';
-      lancamentos.forEach(l => {
-        const div = document.createElement('div');
-        div.style = "display:flex; justify-between:space-between; align-items:center; padding: 0.5rem 0; border-bottom:1px solid #eee;";
-        div.innerHTML = `
-          <span>${l.data} - ${l.descricao} (R$ ${l.valor.toFixed(2)})</span>
-          <button onclick="alternarConciliacao(${l.id})" style="background:${l.conciliado ? '#10b981' : '#f59e0b'}; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">
-            ${l.conciliado ? 'Conciliado ✓' : 'Conciliar'}
-          </button>
-        `;
-        container.appendChild(div);
-      });
-      document.getElementById('modal-conciliacao').style.display = 'block';
+      if (confirm("Deseja realmente excluir este lançamento contábil?")) {
+        lancamentos = lancamentos.filter(l => l.id !== id);
+        salvarEAtualizar();
+      }
     }
 
     function abrirModalCategoria() { document.getElementById('modal-categoria').style.display = 'block'; }
+    function abrirModalConfiguracoes() { document.getElementById('modal-configuracoes').style.display = 'block'; }
     function fecharModais() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
 
     window.onload = function() {
