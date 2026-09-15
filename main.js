@@ -65,6 +65,32 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// main.js - Adicione dentro do listener DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+  // Inicialização básica
+  popularSelects(state.contasCustomizadas);
+  popularFiltroLivros();
+  renderUI(state);
+
+  // Lógica de Navegação entre Abas/Janelas
+  const navButtons = document.querySelectorAll('[data-target]');
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const targetId = e.currentTarget.getAttribute('data-target');
+      
+      // Oculta todas as seções e remove classe ativa dos botões
+      document.querySelectorAll('.tab-content').forEach(sec => sec.style.display = 'none');
+      document.querySelectorAll('[data-target]').forEach(b => b.classList.remove('active'));
+
+      // Exibe a seção selecionada
+      const targetSection = document.getElementById(targetId);
+      if (targetSection) {
+        targetSection.style.display = 'block';
+        e.currentTarget.classList.add('active');
+      }
+    });
+  });
+  
 function popularFiltroLivros() {
   const select = document.getElementById('select-livro-filtro');
   select.innerHTML = '<option value="atual">Livro Fiscal Ativo (Em Aberto)</option>';
