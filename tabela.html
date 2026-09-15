@@ -2,299 +2,190 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Tabela Financeira</title>
+  <title>Tabela Financeira - Partidas Dobradas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <h1>📋 Tabela Financeira</h1>
+    <h1><i class="fas fa-book-journal-whills"></i> Livro Razão & Partidas Dobradas</h1>
   </header>
 
   <div class="container">
     <nav class="sidebar">
-      <h2>Menu</h2>
+      <h2>Menu Contábil</h2>
       <ul>
-        <li><a href="index.html">🏠 Início</a></li>
-        <li><a href="tabela.html">📋 Tabela Financeira</a></li>
-        <li><a href="graficos.html">📈 Gráficos</a></li>
-        <li><a href="investimentos/investimentos.html">💰 Investimentos</a></li>
-        <li><a href="taxas/taxas.html">📊 Taxas e Juros</a></li>
-        <li><a href="compras/compras.html">🛒 Controle de Compras</a></li>
+        <li><a href="index.html"><i class="fas fa-home"></i> Início</a></li>
+        <li><a href="tabela.html" class="active"><i class="fas fa-table"></i> Tabela Financeira</a></li>
+        <li><a href="graficos.html"><i class="fas fa-chart-pie"></i> Gráficos</a></li>
       </ul>
     </nav>
 
     <main class="main-content">
-      <div class="total-area" id="totals">
-        <h3>Totais</h3>
-        Entradas: R$ <span id="total-entrada">0</span> |
-        Despesas: R$ <span id="total-saida">0</span> |
-        Saldo: R$ <span id="saldo">0</span>
+      <!-- Cards do Balancete -->
+      <div class="cards-summary">
+        <div class="card assets">
+          <h4>Ativos (Caixa / Bancos)</h4>
+          <div class="value" id="total-assets">R$ 0,00</div>
+        </div>
+        <div class="card liabilities">
+          <h4>Passivos (Cartões / Dívidas)</h4>
+          <div class="value" id="total-liabilities">R$ 0,00</div>
+        </div>
+        <div class="card income">
+          <h4>Receitas Acumuladas</h4>
+          <div class="value" id="total-income">R$ 0,00</div>
+        </div>
+        <div class="card expenses">
+          <h4>Despesas Acumuladas</h4>
+          <div class="value" id="total-expenses">R$ 0,00</div>
+        </div>
       </div>
 
-      <div class="botoes">
-        <button onclick="adicionarLinha()">➕ Adicionar Lançamento</button>
-        <button onclick="baixarCSV()">⬇️ Baixar CSV</button>
-        <button onclick="document.getElementById('importar-csv').click()">📤 Importar CSV</button>
-        <button onclick="Confirmar_pagamento()"> Confirmar pagamento</button>
-        <input type="file" id="importar-csv" accept=".csv" style="display: none" onchange="importarCSV(event)">
+      <!-- Formulário de Partida Dobrada -->
+      <div class="form-container">
+        <h3><i class="fas fa-plus-circle"></i> Novo Lançamento Contábil</h3>
+        <form id="ledger-form" onsubmit="registrarLancamento(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Data</label>
+              <input type="date" id="data" required>
+            </div>
+            <div class="form-group">
+              <label>Descrição</label>
+              <input type="text" id="descricao" placeholder="Ex: Mercado, Salário" required>
+            </div>
+            <div class="form-group">
+              <label>Valor (R$)</label>
+              <input type="number" step="0.01" id="valor" placeholder="0.00" required>
+            </div>
+            <div class="form-group">
+              <label>Conta Origem (Crédito)</label>
+              <select id="conta-origem" required>
+                <optgroup label="Ativos (Saída de Dinheiro)">
+                  <option value="Ativos:Caixa">Ativos: Caixa</option>
+                  <option value="Ativos:Banco">Ativos: Conta Banco</option>
+                </optgroup>
+                <optgroup label="Passivos (Aumento de Dívida)">
+                  <option value="Passivos:Cartao">Passivos: Cartão de Crédito</option>
+                  <option value="Passivos:Emprestimo">Passivos: Empréstimo</option>
+                </optgroup>
+                <optgroup label="Receitas (Origem de Recurso)">
+                  <option value="Receitas:Salario">Receitas: Salário</option>
+                  <option value="Receitas:Investimentos">Receitas: Rendimentos</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Conta Destino (Débito)</label>
+              <select id="conta-destino" required>
+                <optgroup label="Despesas (Aplicação de Recurso)">
+                  <option value="Despesas:Alimentacao">Despesas: Alimentação</option>
+                  <option value="Despesas:Moradia">Despesas: Moradia</option>
+                  <option value="Despesas:Transporte">Despesas: Transporte</option>
+                  <option value="Despesas:Lazer">Despesas: Lazer</option>
+                </optgroup>
+                <optgroup label="Ativos (Entrada de Dinheiro)">
+                  <option value="Ativos:Banco">Ativos: Conta Banco</option>
+                  <option value="Ativos:Caixa">Ativos: Caixa</option>
+                </optgroup>
+                <optgroup label="Passivos (Pagamento de Dívida)">
+                  <option value="Passivos:Cartao">Passivos: Cartão de Crédito</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top: 1rem;"><i class="fas fa-save"></i> Registrar Partida Dobrada</button>
+        </form>
       </div>
 
-      <table id="tabela-financeira">
+      <!-- Tabela de Lançamentos -->
+      <table>
         <thead>
           <tr>
             <th>Data</th>
             <th>Descrição</th>
-            <th>Categoria</th>
-            <th>Tipo</th>
-            <th>Valor (R$)</th>
-            <th>Despesas</th>
-            <th>Movimento</th>
-            <th>Data de Pagamento</th>
-            <th>Pendência</th>
+            <th>Origem (Crédito)</th>
+            <th>Destino (Débito)</th>
+            <th>Valor</th>
             <th>Ações</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="tabela-corpo"></tbody>
       </table>
-
-      <div class="legenda">
-        <strong>Legenda:</strong><br>
-        <b>Data</b>: Quando o lançamento foi feito<br>
-        <b>Descrição</b>: Nome ou detalhe do item<br>
-        <b>Categoria</b>: Tipo de gasto ou receita<br>
-        <b>Tipo</b>: Entrada ou Saída<br>
-        <b>Valor</b>: Valor total<br>
-        <b>Despesas</b>: Valor específico de despesa<br>
-        <b>Movimento</b>: Forma de movimentação (ex: débito)<br>
-        <b>Data de Pagamento</b>: Quando foi pago<br>
-        <b>Pendência</b>: Se está pendente ou não
-      </div>
     </main>
   </div>
 
-  <script src="scripts.js"></script> <!-- seu JavaScript pode ser separado -->
-</body>
-<script>
-function adicionarLinha() {
-  const tbody = document.querySelector("#tabela-financeira tbody");
-  const tr = document.createElement("tr");
-  for (let i = 0; i < 9; i++) {
-    const td = document.createElement("td");
-    td.innerHTML = '<input type="text">';
-    tr.appendChild(td);
-  }
-  const tdAcoes = document.createElement("td");
-  tdAcoes.innerHTML = '<button onclick="salvarLinha(this)">Salvar</button>';
-  tr.appendChild(tdAcoes);
-  tbody.appendChild(tr);
-}
+  <script>
+    let lancamentos = JSON.parse(localStorage.getItem('partidas_dobradas')) || [];
 
-function salvarLinha(botao) {
-  const tr = botao.parentElement.parentElement;
-  const inputs = tr.querySelectorAll("input");
-  inputs.forEach((input) => {
-    const td = input.parentElement;
-    td.textContent = input.value;
-  });
-  const tdAcoes = tr.querySelector("td:last-child");
-  tdAcoes.innerHTML =
-    '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
-  salvarDados();
-  atualizarTotais();
-}
+    function registrarLancamento(event) {
+      event.preventDefault();
+      const novo = {
+        id: Date.now(),
+        data: document.getElementById('data').value,
+        descricao: document.getElementById('descricao').value,
+        valor: parseFloat(document.getElementById('valor').value),
+        origem: document.getElementById('conta-origem').value,
+        destino: document.getElementById('conta-destino').value
+      };
 
-function editarLinha(botao) {
-  const tr = botao.parentElement.parentElement;
-  for (let i = 0; i < 9; i++) {
-    const td = tr.children[i];
-    td.innerHTML = `<input type="text" value="${td.textContent}">`;
-  }
-  const tdAcoes = tr.querySelector("td:last-child");
-  tdAcoes.innerHTML = '<button onclick="salvarLinha(this)">Salvar</button>';
-}
-
-function removerLinha(botao) {
-  const tr = botao.parentElement.parentElement;
-  tr.remove();
-  salvarDados();
-  atualizarTotais();
-}
-
-function salvarDados() {
-  const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
-  const dados = [];
-  linhas.forEach(tr => {
-    const valores = [];
-    for (let i = 0; i < 9; i++) {
-      valores.push(tr.children[i].textContent);
+      lancamentos.push(novo);
+      salvarEAtualizar();
+      document.getElementById('ledger-form').reset();
     }
-    dados.push(valores);
-  });
-  localStorage.setItem("dados_tabela", JSON.stringify(dados));
-}
 
-function carregarDados() {
-  const dados = JSON.parse(localStorage.getItem("dados_tabela")) || [];
-  const tbody = document.querySelector("#tabela-financeira tbody");
-  tbody.innerHTML = "";
-
-  dados.forEach((linha) => {
-    const tr = document.createElement("tr");
-    linha.forEach((valor, i) => {
-      const td = document.createElement("td");
-      if (i === 4) {
-        const tipo = linha[3].toLowerCase();
-        const numero = parseFloat(valor.replace(",", "."));
-        td.textContent = isNaN(numero)
-          ? "R$ 0,00"
-          : `R$ ${numero.toFixed(2).replace(".", ",")}`;
-        td.className = tipo === "entrada"
-          ? "entrada"
-          : (tipo === "saída" || tipo === "saida" ? "saida" : "");
-      } else {
-        td.textContent = valor;
-      }
-      tr.appendChild(td);
-    });
-
-    const tdAcoes = document.createElement("td");
-    tdAcoes.innerHTML =
-      '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
-    tr.appendChild(tdAcoes);
-    tbody.appendChild(tr);
-  });
-
-  atualizarTotais();
-}
-
-function atualizarTotais() {
-  const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
-  let totalEntradas = 0;
-  let totalSaidas = 0;
-
-  linhas.forEach(tr => {
-    const tipo = tr.children[3].textContent.toLowerCase();
-    const valor = parseFloat(
-      tr.children[4].textContent.replace("R$", "").replace(",", ".").trim()
-    ) || 0;
-
-    if (tipo === "entrada") totalEntradas += valor;
-    else if (tipo === "saída" || tipo === "saida") totalSaidas += valor;
-  });
-
-  document.getElementById("total-entrada").textContent = totalEntradas
-    .toFixed(2)
-    .replace(".", ",");
-  document.getElementById("total-saida").textContent = totalSaidas
-    .toFixed(2)
-    .replace(".", ",");
-  document.getElementById("saldo").textContent = (totalEntradas - totalSaidas)
-    .toFixed(2)
-    .replace(".", ",");
-}
-
-function baixarCSV() {
-  const linhas = document.querySelectorAll("#tabela-financeira tbody tr");
-  if (linhas.length === 0) return alert("Nenhum dado para exportar.");
-
-  const cabecalho = [
-    "Data",
-    "Descrição",
-    "Categoria",
-    "Tipo",
-    "Valor (R$)",
-    "Despesas",
-    "Movimento",
-    "Data de Pagamento",
-    "Pendência"
-  ];
-  let csv = cabecalho.join(";") + "\n";
-
-  linhas.forEach(tr => {
-    const valores = [];
-    for (let i = 0; i < 9; i++) {
-      let texto = tr.children[i].textContent || "";
-      if (i === 4) {
-        texto = texto.replace("R$", "").trim().replace(",", ".");
-        const numero = parseFloat(texto);
-        texto = isNaN(numero)
-          ? "0,00"
-          : numero.toFixed(2).replace(".", ",");
-      }
-      texto = texto.replace(/"/g, '""');
-      valores.push(`"${texto}"`);
+    function removerLancamento(id) {
+      lancamentos = lancamentos.filter(l => l.id !== id);
+      salvarEAtualizar();
     }
-    csv += valores.join(";") + "\n";
-  });
 
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "lancamentos.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
+    function salvarEAtualizar() {
+      localStorage.setItem('partidas_dobradas', JSON.stringify(lancamentos));
+      renderizarTabela();
+      calcularBalancete();
+    }
 
-function importarCSV(event) {
-  const file = event.target.files[0];
-  if (!file) return alert("Nenhum arquivo selecionado.");
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const linhas = e.target.result.split("\n").map(l => l.trim()).filter(l => l);
-    linhas.shift(); // remove cabeçalho
-    const tbody = document.querySelector("#tabela-financeira tbody");
-    tbody.innerHTML = "";
-    const dados = [];
+    function renderizarTabela() {
+      const tbody = document.getElementById('tabela-corpo');
+      tbody.innerHTML = '';
+      lancamentos.forEach(l => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${l.data}</td>
+          <td>${l.descricao}</td>
+          <td><span class="badge" style="background:#fee2e2; color:#991b1b; padding:3px 8px; border-radius:4px;">${l.origem}</span></td>
+          <td><span class="badge" style="background:#dcfce7; color:#166534; padding:3px 8px; border-radius:4px;">${l.destino}</span></td>
+          <td><strong>R$ ${l.valor.toFixed(2).replace('.', ',')}</strong></td>
+          <td><button onclick="removerLancamento(${l.id})" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;"><i class="fas fa-trash"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
-    linhas.forEach((linha, index) => {
-      const campos = linha.includes(";") ? linha.split(";") : linha.split(",");
-      const valores = campos.map(campo => campo.replace(/^"|"$/g, "").replace(/""/g, '"').trim());
+    function calcularBalancete() {
+      let assets = 0, liabilities = 0, income = 0, expenses = 0;
 
-      if (valores.length !== 9) {
-        console.warn(`Linha ${index + 2} ignorada: ${valores.length} colunas`);
-        return;
-      }
+      lancamentos.forEach(l => {
+        // Regras de Partidas Dobradas
+        if (l.destino.startsWith('Ativos')) assets += l.valor;
+        if (l.origem.startsWith('Ativos')) assets -= l.valor;
 
-      dados.push(valores);
+        if (l.destino.startsWith('Passivos')) liabilities -= l.valor;
+        if (l.origem.startsWith('Passivos')) liabilities += l.valor;
 
-      const tr = document.createElement("tr");
-      valores.forEach((valor, i) => {
-        const td = document.createElement("td");
-        if (i === 4) {
-          const tipo = valores[3].toLowerCase();
-          const numero = parseFloat(valor.replace(",", "."));
-          const exibicao = isNaN(numero)
-            ? "R$ 0,00"
-            : `R$ ${numero.toFixed(2).replace(".", ",")}`;
-          td.textContent = exibicao;
-          td.className = tipo === "entrada"
-            ? "entrada"
-            : (tipo === "saída" || tipo === "saida" ? "saida" : "");
-        } else {
-          td.textContent = valor;
-        }
-        tr.appendChild(td);
+        if (l.origem.startsWith('Receitas')) income += l.valor;
+        if (l.destino.startsWith('Despesas')) expenses += l.valor;
       });
 
-      const tdAcoes = document.createElement("td");
-      tdAcoes.innerHTML =
-        '<button onclick="editarLinha(this)">Editar</button> <button onclick="removerLinha(this)">Excluir</button>';
-      tr.appendChild(tdAcoes);
-      tbody.appendChild(tr);
-    });
+      document.getElementById('total-assets').textContent = `R$ ${assets.toFixed(2).replace('.', ',')}`;
+      document.getElementById('total-liabilities').textContent = `R$ ${liabilities.toFixed(2).replace('.', ',')}`;
+      document.getElementById('total-income').textContent = `R$ ${income.toFixed(2).replace('.', ',')}`;
+      document.getElementById('total-expenses').textContent = `R$ ${expenses.toFixed(2).replace('.', ',')}`;
+    }
 
-    localStorage.setItem("dados_tabela", JSON.stringify(dados));
-    atualizarTotais();
-    alert("Importação concluída com sucesso!");
-  };
-  reader.readAsText(file, "UTF-8");
-}
-
-window.onload = carregarDados;
-</script>
+    window.onload = salvarEAtualizar;
+  </script>
 </body>
 </html>
-
