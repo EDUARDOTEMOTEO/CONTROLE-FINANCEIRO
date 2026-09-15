@@ -39,3 +39,9 @@ export function reabrirLivro(state, id) {
   saveData({ lancamentos: state.lancamentos, livrosFiscais: state.livrosFiscais });
   return true;
 }
+export function fecharLivroAtual(state, totais) {
+  const confirmacao = confirm("Tem certeza que deseja encerrar o Livro Fiscal ativo? Os lançamentos serão travados em modo de leitura.");
+  if (!confirmacao) return null;
+
+  // Lógica de encerramento existente...
+}
