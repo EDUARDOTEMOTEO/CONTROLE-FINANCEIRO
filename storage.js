@@ -30,3 +30,21 @@ export function saveData(data) {
   if (data.livrosFiscais !== undefined) localStorage.setItem(KEYS.LIVROS, JSON.stringify(data.livrosFiscais));
   if (data.contasCustomizadas !== undefined) localStorage.setItem(KEYS.CONTAS, JSON.stringify(data.contasCustomizadas));
 }
+
+export function loadData() {
+  try {
+    const lancamentos = JSON.parse(localStorage.getItem(KEYS.LANCAMENTOS)) || [];
+    const livrosFiscais = JSON.parse(localStorage.getItem(KEYS.LIVROS)) || [];
+    let contasCustomizadas = JSON.parse(localStorage.getItem(KEYS.CONTAS));
+
+    if (!contasCustomizadas || contasCustomizadas.length === 0) {
+      contasCustomizadas = defaultContas;
+      localStorage.setItem(KEYS.CONTAS, JSON.stringify(defaultContas));
+    }
+
+    return { lancamentos, livrosFiscais, contasCustomizadas };
+  } catch (error) {
+    console.error("Erro ao carregar dados do localStorage, restaurando padrões:", error);
+    return { lancamentos: [], livrosFiscais: [], contasCustomizadas: defaultContas };
+  }
+}
