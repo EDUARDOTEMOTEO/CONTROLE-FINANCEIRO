@@ -5,20 +5,30 @@
   <title>Sistema de Gestão Contábil & Financeira</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="style.css">
   <style>
     .top-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
     .btn-dropdown { background: #e2e8f0; border: none; padding: 0.6rem 0.9rem; border-radius: 6px; cursor: pointer; font-size: 1.1rem; }
     .btn-dropdown:hover { background: #cbd5e1; }
     .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); overflow-y: auto; }
-    .modal-content { background: white; margin: 3% auto; padding: 1.5rem; border-radius: 8px; width: 90%; max-width: 750px; }
+    .modal-content { background: white; margin: 3% auto; padding: 1.5rem; border-radius: 8px; width: 90%; max-width: 800px; }
     .close-modal { float: right; font-size: 1.5rem; cursor: pointer; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .badge-reconciled { background: #dcfce7; color: #15803d; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
     .badge-pending { background: #fef3c7; color: #b45309; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
     .reconcile-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
-    .book-history-card { background: #fff; border: 1px solid #cbd5e1; padding: 1rem; border-radius: 6px; margin-bottom: 0.75rem; }
+    .book-history-card { background: #fff; border: 1px solid #cbd5e1; padding: 1.25rem; border-radius: 8px; margin-bottom: 1rem; }
+    .book-status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; margin-bottom: 0.5rem; }
+    .status-open { background: #dbeafe; color: #1e40af; }
+    .status-closed { background: #fef3c7; color: #92400e; }
+    .btn-action { border: none; padding: 5px 9px; border-radius: 4px; cursor: pointer; color: white; margin-right: 4px; font-size: 0.85rem; }
+    @media print {
+      body * { visibility: hidden; }
+      #printable-area, #printable-area * { visibility: visible; }
+      #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -40,10 +50,9 @@
     </nav>
 
     <main class="main-content">
-      <!-- Barra Superior -->
       <div class="top-actions">
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn-primary" onclick="encerrarEGerarLivroFiscal()"><i class="fas fa-lock"></i> Fechar Livro Fiscal</button>
+          <button class="btn-primary" id="btn-fechar-livro" onclick="encerrarEGerarLivroFiscal()"><i class="fas fa-lock"></i> Fechar Livro Fiscal</button>
           <button class="btn-primary" style="background:#0284c7;" onclick="abrirModalConciliacao()"><i class="fas fa-check-double"></i> Conciliação Bancária</button>
           <button class="btn-primary" style="background:#475569;" onclick="abrirModalCategoria()"><i class="fas fa-folder-plus"></i> Nova Conta</button>
         </div>
@@ -77,9 +86,10 @@
           </div>
         </div>
 
-        <div class="form-container">
-          <h3><i class="fas fa-plus-circle"></i> Novo Lançamento Contábil</h3>
-          <form id="ledger-form" onsubmit="registrarLancamento(event)">
+        <div class="form-container" id="form-container-box">
+          <h3 id="form-title"><i class="fas fa-plus-circle"></i> Novo Lançamento Contábil</h3>
+          <form id="ledger-form" onsubmit="salvarLancamento(event)">
+            <input type="hidden" id="edit-id" value="">
             <div class="form-grid">
               <div class="form-group">
                 <label>Data</label>
@@ -102,7 +112,10 @@
                 <select id="conta-destino" required></select>
               </div>
             </div>
-            <button type="submit" class="btn-primary" style="margin-top: 1.25rem;"><i class="fas fa-save"></i> Registrar Partida Dobrada</button>
+            <div style="margin-top: 1.25rem; display: flex; gap: 10px;">
+              <button type="submit" id="btn-submit-form" class="btn-primary"><i class="fas fa-save"></i> Registrar Partida Dobrada</button>
+              <button type="button" id="btn-cancel-edit" class="btn-primary" style="background:#64748b; display:none;" onclick="cancelarEdicao()">Cancelar Edição</button>
+            </div>
           </form>
         </div>
 
@@ -124,28 +137,54 @@
 
       <!-- ABA 2: HISTÓRICO DE LIVROS FISCAIS -->
       <div id="tab-livros" class="tab-content">
-        <h2><i class="fas fa-book-journal-whills"></i> Histórico de Livros Fiscais Fechados</h2>
-        <p>Registro histórico de encerramentos contábeis e balancetes validados.</p>
+        <h2><i class="fas fa-book-journal-whills"></i> Gestão de Livros Fiscais</h2>
+        <p style="margin-bottom:1.5rem;">Registro e controle de encerramentos contábeis e escrituração fiscal.</p>
         <div id="historico-livros-container"></div>
       </div>
 
+      <!-- ABA 3: GRÁFICOS & DRE -->
       <div id="tab-graficos" class="tab-content">
-        <h2><i class="fas fa-chart-pie"></i> Demonstrações Financeiras</h2>
-        <p>Visão gerencial da DRE e evolução patrimonial.</p>
+        <h2><i class="fas fa-chart-pie"></i> Demonstrações e Gráficos Gerenciais</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 1.5rem;">
+          <div style="background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h4>Distribuição de Despesas</h4>
+            <canvas id="chartDespesas"></canvas>
+          </div>
+          <div style="background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h4>Balanço Patrimonial</h4>
+            <canvas id="chartBalanco"></canvas>
+          </div>
+        </div>
       </div>
 
-      <div id="tab-investimentos" class="tab-content"><h2><i class="fas fa-coins"></i> Investimentos</h2></div>
-      <div id="tab-taxas" class="tab-content"><h2><i class="fas fa-percentage"></i> Taxas e Juros</h2></div>
+      <div id="tab-investimentos" class="tab-content"><h2><i class="fas fa-coins"></i> Carteira de Investimentos</h2></div>
+      <div id="tab-taxas" class="tab-content"><h2><i class="fas fa-percentage"></i> Calculadora de Taxas e Juros</h2></div>
       <div id="tab-compras" class="tab-content"><h2><i class="fas fa-shopping-cart"></i> Controle de Compras</h2></div>
     </main>
   </div>
 
-  <!-- MODAL: CONCILIAÇÃO BANCÁRIA PARITÁRIA -->
+  <!-- MODAL: RELATÓRIO DO LIVRO FISCAL -->
+  <div id="modal-relatorio-livro" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="fecharModais()">&times;</span>
+      <div id="printable-area">
+        <h2 id="relatorio-titulo"><i class="fas fa-file-invoice"></i> Relatório Fiscal Encerramento</h2>
+        <hr style="margin: 1rem 0; border: none; border-top: 1px solid #e2e8f0;">
+        <div id="relatorio-conteudo"></div>
+      </div>
+      <div style="margin-top:1.5rem; display:flex; gap:10px; justify-content:flex-end;">
+        <button class="btn-primary" style="background:#0284c7;" onclick="window.print()"><i class="fas fa-print"></i> Gerar / Baixar Relatório (PDF)</button>
+        <button class="btn-primary" style="background:#64748b;" onclick="fecharModais()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONCILIAÇÃO BANCÁRIA -->
   <div id="modal-conciliacao" class="modal">
     <div class="modal-content">
       <span class="close-modal" onclick="fecharModais()">&times;</span>
       <h3><i class="fas fa-check-double"></i> Conciliação Bancária por Paridade</h3>
-      <p style="font-size: 0.85rem; color: #64748b;">Para validar uma conciliação real, selecione um lançamento de SAÍDA e outro de ENTRADA correspondente. Os valores precisam coincidir exatamente.</p>
+      <p style="font-size: 0.85rem; color: #64748b;">Selecione um lançamento de SAÍDA e outro de ENTRADA correspondente com valores idênticos.</p>
       
       <div class="reconcile-box">
         <form onsubmit="executarConciliacaoParitaria(event)">
@@ -203,15 +242,42 @@
   <script>
     let lancamentos = JSON.parse(localStorage.getItem('partidas_dobradas')) || [];
     let livrosFiscais = JSON.parse(localStorage.getItem('livros_fiscais')) || [];
+    
+    // Plano de Contas Pré-Carregado Extenso Padrão
     let contasCustomizadas = JSON.parse(localStorage.getItem('contas_custom')) || [
       { grupo: 'Ativos', nome: 'Ativos:Caixa' },
-      { grupo: 'Ativos', nome: 'Ativos:Banco' },
-      { grupo: 'Passivos', nome: 'Passivos:Cartao' },
+      { grupo: 'Ativos', nome: 'Ativos:Banco:ContaCorrente' },
+      { grupo: 'Ativos', nome: 'Ativos:Banco:Poupanca' },
+      { grupo: 'Ativos', nome: 'Ativos:Investimentos:CDB' },
+      { grupo: 'Ativos', nome: 'Ativos:Investimentos:Acoes' },
+      { grupo: 'Ativos', nome: 'Ativos:ClientesAReceber' },
+      { grupo: 'Passivos', nome: 'Passivos:CartaoCredito' },
+      { grupo: 'Passivos', nome: 'Passivos:Emprestimos' },
+      { grupo: 'Passivos', nome: 'Passivos:FornecedoresAPagar' },
+      { grupo: 'Passivos', nome: 'Passivos:ImpostosARecolher' },
       { grupo: 'Receitas', nome: 'Receitas:Salario' },
-      { grupo: 'Despesas', nome: 'Despesas:Alimentacao' },
+      { grupo: 'Receitas', nome: 'Receitas:ServicosPrestados' },
+      { grupo: 'Receitas', nome: 'Receitas:RendimentosInvestimentos' },
+      { grupo: 'Receitas', nome: 'Receitas:Vendas' },
+      { grupo: 'Despesas', nome: 'Despesas:Alimentacao:Supermercado' },
+      { grupo: 'Despesas', nome: 'Despesas:Alimentacao:Restaurante' },
       { grupo: 'Despesas', nome: 'Despesas:Automovel:Combustivel' },
-      { grupo: 'Despesas', nome: 'Despesas:Moradia:Aluguel' }
+      { grupo: 'Despesas', nome: 'Despesas:Automovel:Manutencao' },
+      { grupo: 'Despesas', nome: 'Despesas:Moradia:Aluguel' },
+      { grupo: 'Despesas', nome: 'Despesas:Moradia:Energia' },
+      { grupo: 'Despesas', nome: 'Despesas:Moradia:Agua' },
+      { grupo: 'Despesas', nome: 'Despesas:Moradia:Internet' },
+      { grupo: 'Despesas', nome: 'Despesas:Saude:Farmacia' },
+      { grupo: 'Despesas', nome: 'Despesas:Saude:PlanoDeSaude' },
+      { grupo: 'Despesas', nome: 'Despesas:Educacao:Cursos' },
+      { grupo: 'Despesas', nome: 'Despesas:Impostos:IPVA' },
+      { grupo: 'Despesas', nome: 'Despesas:Impostos:IPTU' },
+      { grupo: 'Despesas', nome: 'Despesas:TarifasBancarias' },
+      { grupo: 'Despesas', nome: 'Despesas:Lazer' }
     ];
+
+    let chartDespesasInstance = null;
+    let chartBalancoInstance = null;
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -219,6 +285,7 @@
       document.getElementById('tab-' + tabId).classList.add('active');
       event.currentTarget.classList.add('active');
       if (tabId === 'livros') renderizarHistoricoLivros();
+      if (tabId === 'graficos') renderizarGraficos();
     }
 
     function popularSelects() {
@@ -231,8 +298,28 @@
       });
     }
 
-    function registrarLancamento(event) {
+    function verificarLivroFechado() {
+      const livroFechado = livrosFiscais.some(l => l.status === 'FECHADO');
+      const formBox = document.getElementById('form-container-box');
+      if (livroFechado) {
+        formBox.style.opacity = '0.5';
+        formBox.style.pointerEvents = 'none';
+        document.getElementById('form-title').innerHTML = `<i class="fas fa-lock" style="color:#ef4444;"></i> Período Fiscal Fechado (Leitura Apenas)`;
+      } else {
+        formBox.style.opacity = '1';
+        formBox.style.pointerEvents = 'all';
+        document.getElementById('form-title').innerHTML = `<i class="fas fa-plus-circle"></i> Novo Lançamento Contábil`;
+      }
+      return livroFechado;
+    }
+
+    function salvarLancamento(event) {
       event.preventDefault();
+      if (verificarLivroFechado()) {
+        alert("O livro fiscal do período está fechado. Reabra o livro para realizar edições.");
+        return;
+      }
+
       const orig = document.getElementById('conta-origem').value;
       const dest = document.getElementById('conta-destino').value;
 
@@ -241,22 +328,68 @@
         return;
       }
 
-      const novo = {
-        id: Date.now(),
-        data: document.getElementById('data').value,
-        descricao: document.getElementById('descricao').value,
-        valor: parseFloat(document.getElementById('valor').value),
-        origem: orig,
-        destino: dest,
-        conciliado: false,
-        conciliadoCom: null
-      };
-      lancamentos.push(novo);
+      const editId = document.getElementById('edit-id').value;
+
+      if (editId) {
+        const item = lancamentos.find(l => l.id === parseInt(editId));
+        if (item) {
+          item.data = document.getElementById('data').value;
+          item.descricao = document.getElementById('descricao').value;
+          item.valor = parseFloat(document.getElementById('valor').value);
+          item.origem = orig;
+          item.destino = dest;
+        }
+      } else {
+        const novo = {
+          id: Date.now(),
+          data: document.getElementById('data').value,
+          descricao: document.getElementById('descricao').value,
+          valor: parseFloat(document.getElementById('valor').value),
+          origem: orig,
+          destino: dest,
+          conciliado: false,
+          conciliadoCom: null
+        };
+        lancamentos.push(novo);
+      }
+
+      cancelarEdicao();
       salvarEAtualizar();
+    }
+
+    function editarLancamento(id) {
+      if (verificarLivroFechado()) {
+        alert("Não é possível editar lançamentos com o Livro Fiscal fechado.");
+        return;
+      }
+      const item = lancamentos.find(l => l.id === id);
+      if (!item) return;
+
+      document.getElementById('edit-id').value = item.id;
+      document.getElementById('data').value = item.data;
+      document.getElementById('descricao').value = item.descricao;
+      document.getElementById('valor').value = item.valor;
+      document.getElementById('conta-origem').value = item.origem;
+      document.getElementById('conta-destino').value = item.destino;
+
+      document.getElementById('btn-submit-form').innerHTML = `<i class="fas fa-check"></i> Atualizar Lançamento`;
+      document.getElementById('btn-cancel-edit').style.display = 'inline-block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function cancelarEdicao() {
+      document.getElementById('edit-id').value = '';
       document.getElementById('ledger-form').reset();
+      document.getElementById('data').valueAsDate = new Date();
+      document.getElementById('btn-submit-form').innerHTML = `<i class="fas fa-save"></i> Registrar Partida Dobrada`;
+      document.getElementById('btn-cancel-edit').style.display = 'none';
     }
 
     function abrirModalConciliacao() {
+      if (verificarLivroFechado()) {
+        alert("Livro fiscal está fechado. Reabra para fazer alterações.");
+        return;
+      }
       const selectSaida = document.getElementById('concil-saida');
       const selectEntrada = document.getElementById('concil-entrada');
       selectSaida.innerHTML = ''; selectEntrada.innerHTML = '';
@@ -289,9 +422,8 @@
       const l1 = lancamentos.find(l => l.id === idSaida);
       const l2 = lancamentos.find(l => l.id === idEntrada);
 
-      // Validação Contábil: O valor deve bater obrigatoriamente
       if (Math.abs(l1.valor - l2.valor) > 0.001) {
-        alert(`FALHA NA CONCILIAÇÃO: Os valores não coincidem! (R$ ${l1.valor.toFixed(2)} vs R$ ${l2.valor.toFixed(2)}). A conciliação foi rejeitada para evitar inconsistência contábil.`);
+        alert(`FALHA NA CONCILIAÇÃO: Os valores não coincidem! (R$ ${l1.valor.toFixed(2)} vs R$ ${l2.valor.toFixed(2)}).`);
         return;
       }
 
@@ -308,7 +440,7 @@
     function encerrarEGerarLivroFiscal() {
       const pendentes = lancamentos.filter(l => !l.conciliado);
       if (pendentes.length > 0) {
-        alert(`BLOQUEIO FISCAL: Existem ${pendentes.length} lançamento(s) pendentes de conciliação bancária. Realize a conciliação antes de encerrar o livro.`);
+        alert(`BLOQUEIO FISCAL: Existem ${pendentes.length} lançamento(s) pendentes de conciliação bancária.`);
         return;
       }
 
@@ -320,6 +452,7 @@
       const novoLivro = {
         id: Date.now(),
         dataFechamento: new Date().toLocaleString('pt-BR'),
+        status: 'FECHADO',
         qtdLancamentos: lancamentos.length,
         totalAtivos: document.getElementById('total-assets').textContent,
         totalPassivos: document.getElementById('total-liabilities').textContent,
@@ -327,9 +460,72 @@
         registros: JSON.parse(JSON.stringify(lancamentos))
       };
 
-      livrosFiscais.push(novoLivro);
+      livrosFiscais.unshift(novoLivro);
       localStorage.setItem('livros_fiscais', JSON.stringify(livrosFiscais));
-      alert("LIVRO FISCAL FECHADO COM SUCESSO! O relatório foi gravado no histórico.");
+      salvarEAtualizar();
+      alert("LIVRO FISCAL FECHADO COM SUCESSO! O período está travado para alterações.");
+    }
+
+    function abrirRelatorioLivro(id) {
+      const livro = livrosFiscais.find(l => l.id === id);
+      if (!livro) return;
+
+      document.getElementById('relatorio-titulo').innerHTML = `<i class="fas fa-book"></i> Detalhes do Livro Fiscal - Encerrado em ${livro.dataFechamento}`;
+      
+      let html = `
+        <div style="margin-bottom: 1rem; background:#f8fafc; padding:1rem; border-radius:6px;">
+          <p><strong>Status:</strong> ${livro.status}</p>
+          <p><strong>Total de Ativos:</strong> ${livro.totalAtivos} | <strong>Passivos:</strong> ${livro.totalPassivos}</p>
+          <p><strong>Resultado DRE do Período:</strong> ${livro.resultadoDRE}</p>
+        </div>
+        <h4>Movimentações e Escrituração Contábil:</h4>
+        <table style="width:100%; margin-top:0.5rem; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#f1f5f9;">
+              <th style="padding:6px;">Data</th>
+              <th style="padding:6px;">Descrição</th>
+              <th style="padding:6px;">Origem (Crédito)</th>
+              <th style="padding:6px;">Destino (Débito)</th>
+              <th style="padding:6px;">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      livro.registros.forEach(r => {
+        html += `
+          <tr style="border-bottom: 1px solid #e2e8f0;">
+            <td style="padding:6px; font-size:0.85rem;">${r.data}</td>
+            <td style="padding:6px; font-size:0.85rem;">${r.descricao}</td>
+            <td style="padding:6px; font-size:0.85rem;">${r.origem}</td>
+            <td style="padding:6px; font-size:0.85rem;">${r.destino}</td>
+            <td style="padding:6px; font-size:0.85rem;"><strong>R$ ${r.valor.toFixed(2)}</strong></td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      document.getElementById('relatorio-conteudo').innerHTML = html;
+      document.getElementById('modal-relatorio-livro').style.display = 'block';
+    }
+
+    function reabrirLivroFiscal(id) {
+      if (confirm("Tem certeza que deseja REABRIR este livro fiscal? O período voltará a aceitar novos lançamentos e edições.")) {
+        const livro = livrosFiscais.find(l => l.id === id);
+        if (livro) livro.status = 'ABERTO';
+        localStorage.setItem('livros_fiscais', JSON.stringify(livrosFiscais));
+        salvarEAtualizar();
+        renderizarHistoricoLivros();
+      }
+    }
+
+    function excluirLivroFiscal(id) {
+      if (confirm("Deseja realmente excluir este encerramento fiscal do histórico?")) {
+        livrosFiscais = livrosFiscais.filter(l => l.id !== id);
+        localStorage.setItem('livros_fiscais', JSON.stringify(livrosFiscais));
+        salvarEAtualizar();
+        renderizarHistoricoLivros();
+      }
     }
 
     function renderizarHistoricoLivros() {
@@ -344,12 +540,56 @@
       livrosFiscais.forEach((livro, index) => {
         const div = document.createElement('div');
         div.className = 'book-history-card';
+        const isClosed = livro.status === 'FECHADO';
         div.innerHTML = `
-          <h4><i class="fas fa-book"></i> Livro Fiscal #${livrosFiscais.length - index} - Encerrado em ${livro.dataFechamento}</h4>
-          <p><strong>Lançamentos Auditados:</strong> ${livro.qtdLancamentos} | <strong>Ativos:</strong> ${livro.totalAtivos} | <strong>Resultado DRE:</strong> ${livro.resultadoDRE}</p>
-          <button class="btn-primary" style="padding:4px 8px; font-size:0.8rem;" onclick='alert(JSON.stringify(${JSON.stringify(livro.registros)}, null, 2))'>Visualizar Detalhes do Livro</button>
+          <div>
+            <span class="book-status-badge ${isClosed ? 'status-closed' : 'status-open'}">${livro.status}</span>
+          </div>
+          <h4><i class="fas fa-book"></i> Livro Fiscal #${livrosFiscais.length - index} - ${livro.dataFechamento}</h4>
+          <p style="margin: 0.5rem 0;"><strong>Lançamentos:</strong> ${livro.qtdLancamentos} | <strong>Ativos:</strong> ${livro.totalAtivos} | <strong>Resultado DRE:</strong> ${livro.resultadoDRE}</p>
+          <div style="margin-top: 1rem;">
+            <button class="btn-action" style="background:#0284c7;" onclick="abrirRelatorioLivro(${livro.id})"><i class="fas fa-eye"></i> Visualizar Detalhes</button>
+            ${isClosed ? `<button class="btn-action" style="background:#f59e0b;" onclick="reabrirLivroFiscal(${livro.id})"><i class="fas fa-lock-open"></i> Reabrir Livro</button>` : ''}
+            <button class="btn-action" style="background:#ef4444;" onclick="excluirLivroFiscal(${livro.id})"><i class="fas fa-trash"></i> Excluir</button>
+          </div>
         `;
         container.appendChild(div);
+      });
+    }
+
+    function renderizarGraficos() {
+      const categorias = {};
+      let totalAssets = 0, totalLiabilities = 0;
+
+      lancamentos.forEach(l => {
+        if (l.destino.startsWith('Despesas')) {
+          categorias[l.destino] = (categorias[l.destino] || 0) + l.valor;
+        }
+        if (l.destino.startsWith('Ativos')) totalAssets += l.valor;
+        if (l.origem.startsWith('Ativos')) totalAssets -= l.valor;
+        if (l.destino.startsWith('Passivos')) totalLiabilities -= l.valor;
+        if (l.origem.startsWith('Passivos')) totalLiabilities += l.valor;
+      });
+
+      if (chartDespesasInstance) chartDespesasInstance.destroy();
+      if (chartBalancoInstance) chartBalancoInstance.destroy();
+
+      const ctx1 = document.getElementById('chartDespesas').getContext('2d');
+      chartDespesasInstance = new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(categorias),
+          datasets: [{ data: Object.values(categorias), backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'] }]
+        }
+      });
+
+      const ctx2 = document.getElementById('chartBalanco').getContext('2d');
+      chartBalancoInstance = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: ['Ativos', 'Passivos'],
+          datasets: [{ label: 'Valor (R$)', data: [totalAssets, totalLiabilities], backgroundColor: ['#10b981', '#ef4444'] }]
+        }
       });
     }
 
@@ -393,11 +633,14 @@
       localStorage.setItem('partidas_dobradas', JSON.stringify(lancamentos));
       renderizarTabela();
       calcularBalancete();
+      verificarLivroFechado();
     }
 
     function renderizarTabela() {
       const tbody = document.getElementById('tabela-corpo');
       tbody.innerHTML = '';
+      const isClosed = verificarLivroFechado();
+
       lancamentos.forEach(l => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -407,7 +650,10 @@
           <td><span style="background:#dcfce7; color:#166534; padding:3px 6px; border-radius:4px; font-size:0.8rem;">${l.destino}</span></td>
           <td><strong>R$ ${l.valor.toFixed(2).replace('.', ',')}</strong></td>
           <td>${l.conciliado ? '<span class="badge-reconciled">Conciliado ✓</span>' : '<span class="badge-pending">Pendente</span>'}</td>
-          <td><button onclick="removerLancamento(${l.id})" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;"><i class="fas fa-trash"></i></button></td>
+          <td>
+            ${!isClosed ? `<button onclick="editarLancamento(${l.id})" style="background:#3b82f6; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; margin-right:4px;" title="Editar"><i class="fas fa-edit"></i></button>` : ''}
+            ${!isClosed ? `<button onclick="removerLancamento(${l.id})" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;" title="Excluir"><i class="fas fa-trash"></i></button>` : ''}
+          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -435,6 +681,7 @@
     }
 
     function removerLancamento(id) {
+      if (verificarLivroFechado()) return;
       if (confirm("Deseja realmente excluir este lançamento contábil?")) {
         lancamentos = lancamentos.filter(l => l.id !== id);
         salvarEAtualizar();
