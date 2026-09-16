@@ -1,26 +1,24 @@
-// ui.js - Interface do Usuário e Gráficos
-import { calcularBalancete } from './ledger.js';
+// ui.js - Renderização Completa com Indicadores e Tags
+import { calcularBalancete, encerrarMesContabil } from './ledger.js';
 
 let chartDespesasInstance = null;
 let chartBalancoInstance = null;
 let chartFluxoInstance = null;
+let chartTagsInstance = null;
 
 function formatarMoedaContabil(valor) {
   const absVal = Math.abs(valor).toFixed(2).replace('.', ',');
-  if (valor < 0) {
-    return `(R$ ${absVal})`;
-  }
-  return `R$ ${absVal}`;
+  return valor < 0 ? `(R$ ${absVal})` : `R$ ${absVal}`;
 }
 
 export function renderUI(state) {
   const ex = obterLancamentosExibicao(state);
   const isReadonly = state.livroSelecionadoId !== 'atual';
   
-  // Calcula Balancete e Indicadores
+  // Balancete & Indicadores
   const totais = calcularBalancete(ex);
   
-  // Atualiza Cards na Tela Inicial
+  // Cards Superiores
   document.getElementById('total-assets').textContent = formatarMoedaContabil(totais.assets);
   document.getElementById('total-liabilities').textContent = `R$ ${Math.abs(totais.liabilities).toFixed(2).replace('.', ',')}`;
   document.getElementById('total-income').textContent = `R$ ${Math.abs(totais.income).toFixed(2).replace('.', ',')}`;
@@ -30,42 +28,26 @@ export function renderUI(state) {
   dreEl.textContent = formatarMoedaContabil(totais.dre);
   dreEl.style.color = totais.dre >= 0 ? '#10b981' : '#ef4444';
 
-  // Atualiza Trava de Leitura
-  const formBox = document.getElementById('form-container-box');
-  const statusLabel = document.getElementById('label-livro-status');
-  if (isReadonly) {
-    if (formBox) {
-      formBox.style.opacity = '0.5';
-      formBox.style.pointerEvents = 'none';
-    }
-    if (document.getElementById('form-title')) {
-      document.getElementById('form-title').innerHTML = `<i class="fas fa-lock" style="color:#ef4444;"></i> Modo de Leitura`;
-    }
-    if (statusLabel) {
-      statusLabel.innerHTML = `<span class="badge-pending" style="background:#fee2e2; color:#991b1b;">MODO DE LEITURA</span>`;
-    }
-  } else {
-    if (formBox) {
-      formBox.style.opacity = '1';
-      formBox.style.pointerEvents = 'all';
-    }
-    if (document.getElementById('form-title')) {
-      document.getElementById('form-title').innerHTML = `<i class="fas fa-plus-circle"></i> Novo Lançamento Contábil`;
-    }
-    if (statusLabel) {
-      statusLabel.innerHTML = `<span class="badge-reconciled">EM ABERTO</span>`;
-    }
-  }
+  // Atualiza Cards de Indicadores Financeiros
+  const elLiq = document.getElementById('ind-liquidez');
+  if (elLiq) elLiq.textContent = totais.indicadores.liquidezCorrente;
 
-  // Tabela de Lançamentos
+  const elMarg = document.getElementById('ind-margem');
+  if (elMarg) elMarg.textContent = totais.indicadores.margemLiquida;
+
+  const elBreak = document.getElementById('ind-breakeven');
+  if (elBreak) elBreak.textContent = `R$ ${totais.indicadores.breakEven.toFixed(2).replace('.', ',')}`;
+
+  // Tabela de Lançamentos com Badge de Tags
   const tbody = document.getElementById('tabela-corpo');
   if (tbody) {
     tbody.innerHTML = '';
     ex.forEach(l => {
+      const tagNome = l.tag || 'Operacional';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${l.data}</td>
-        <td>${l.descricao}</td>
+        <td>${l.descricao} <span style="font-size:0.75rem; background:#e2e8f0; color:#475569; padding:2px 6px; border-radius:10px; margin-left:4px;">#${tagNome}</span></td>
         <td><span style="background:#fee2e2; color:#991b1b; padding:3px 6px; border-radius:4px; font-size:0.8rem;">${l.origem}</span></td>
         <td><span style="background:#dcfce7; color:#166534; padding:3px 6px; border-radius:4px; font-size:0.8rem;">${l.destino}</span></td>
         <td><strong>R$ ${parseFloat(l.valor).toFixed(2).replace('.', ',')}</strong></td>
@@ -79,18 +61,25 @@ export function renderUI(state) {
     });
   }
 
-  // Desenha os Gráficos
+  // Renderizar Gráficos
   renderizarGraficos(ex, totais);
 }
 
 export function renderizarGraficos(lancamentosExibicao, totais) {
   if (typeof Chart === 'undefined') return;
 
-  // 1. Gráfico de Rosca (Despesas)
+  // 1. Gráfico Rosca: Despesas por Conta
   const catDespesas = {};
+  // 4. Gráfico Rosca: Despesas por Centro de Custo / Tag
+  const tagDespesas = {};
+
   lancamentosExibicao.forEach(l => {
     if (l.destino.startsWith('Despesas')) {
-      catDespesas[l.destino] = (catDespesas[l.destino] || 0) + parseFloat(l.valor);
+      const val = parseFloat(l.valor);
+      catDespesas[l.destino] = (catDespesas[l.destino] || 0) + val;
+      
+      const tag = l.tag || 'Operacional';
+      tagDespesas[tag] = (tagDespesas[tag] || 0) + val;
     }
   });
 
@@ -101,10 +90,7 @@ export function renderizarGraficos(lancamentosExibicao, totais) {
       type: 'doughnut',
       data: {
         labels: Object.keys(catDespesas),
-        datasets: [{
-          data: Object.values(catDespesas),
-          backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899']
-        }]
+        datasets: [{ data: Object.values(catDespesas), backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'] }]
       },
       options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
     });
@@ -118,38 +104,24 @@ export function renderizarGraficos(lancamentosExibicao, totais) {
       type: 'bar',
       data: {
         labels: ['Ativos', 'Passivos'],
-        datasets: [{
-          label: 'Total (R$)',
-          data: [Math.abs(totais.assets), Math.abs(totais.liabilities)],
-          backgroundColor: ['#10b981', '#ef4444']
-        }]
+        datasets: [{ label: 'Total (R$)', data: [Math.abs(totais.assets), Math.abs(totais.liabilities)], backgroundColor: ['#10b981', '#ef4444'] }]
       },
       options: { responsive: true, plugins: { legend: { display: false } } }
     });
   }
 
-  // 3. Gráfico de Fluxo de Caixa Diário (CORRIGIDO)
+  // 3. Gráfico de Fluxo de Caixa Diário
   const agrupadoPorDia = {};
-  
   lancamentosExibicao.forEach(l => {
     const dia = l.data; 
-    if (!agrupadoPorDia[dia]) {
-      agrupadoPorDia[dia] = { receita: 0, despesa: 0 };
-    }
+    if (!agrupadoPorDia[dia]) agrupadoPorDia[dia] = { receita: 0, despesa: 0 };
 
     const val = parseFloat(l.valor) || 0;
-    if (l.origem.startsWith('Receitas')) {
-      agrupadoPorDia[dia].receita += val;
-    }
-    if (l.destino.startsWith('Despesas')) {
-      agrupadoPorDia[dia].despesa += val;
-    }
+    if (l.origem.startsWith('Receitas')) agrupadoPorDia[dia].receita += val;
+    if (l.destino.startsWith('Despesas')) agrupadoPorDia[dia].despesa += val;
   });
 
   const diasOrdenados = Object.keys(agrupadoPorDia).sort();
-  const arrayReceitas = diasOrdenados.map(d => agrupadoPorDia[d].receita);
-  const arrayDespesas = diasOrdenados.map(d => agrupadoPorDia[d].despesa);
-
   const canvasFluxo = document.getElementById('chartFluxoCaixa');
   if (canvasFluxo) {
     if (chartFluxoInstance) chartFluxoInstance.destroy();
@@ -158,36 +130,25 @@ export function renderizarGraficos(lancamentosExibicao, totais) {
       data: {
         labels: diasOrdenados,
         datasets: [
-          {
-            label: 'Receitas (R$)',
-            data: arrayReceitas,
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            fill: true,
-            tension: 0.3
-          },
-          {
-            label: 'Despesas (R$)',
-            data: arrayDespesas,
-            borderColor: '#ef4444',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            fill: true,
-            tension: 0.3
-          }
+          { label: 'Receitas (R$)', data: diasOrdenados.map(d => agrupadoPorDia[d].receita), borderColor: '#10b981', fill: false, tension: 0.3 },
+          { label: 'Despesas (R$)', data: diasOrdenados.map(d => agrupadoPorDia[d].despesa), borderColor: '#ef4444', fill: false, tension: 0.3 }
         ]
       },
-      options: {
-        responsive: true,
-        plugins: { legend: { position: 'top' } },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: function(value) { return 'R$ ' + value; }
-            }
-          }
-        }
-      }
+      options: { responsive: true }
+    });
+  }
+
+  // 4. Gráfico por Centro de Custo (Tags)
+  const canvasTags = document.getElementById('chartTags');
+  if (canvasTags) {
+    if (chartTagsInstance) chartTagsInstance.destroy();
+    chartTagsInstance = new Chart(canvasTags.getContext('2d'), {
+      type: 'pie',
+      data: {
+        labels: Object.keys(tagDespesas),
+        datasets: [{ data: Object.values(tagDespesas), backgroundColor: ['#6366f1', '#ec4899', '#8b5cf6', '#14b8a6', '#f59e0b'] }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
     });
   }
 }
