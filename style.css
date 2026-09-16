@@ -81,7 +81,16 @@ header h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
   padding: 2rem;
   overflow-x: auto;
 }
+/* Notação Contábil para Valores Negativos */
+.valor-negativo {
+  color: #dc2626;
+  font-weight: bold;
+}
 
+.valor-positivo {
+  color: #059669;
+  font-weight: bold;
+}
 /* Dashboard Cards */
 .cards-summary {
   display: grid;
