@@ -1,14 +1,10 @@
+// ui.js - Interface do Usuário e Gráficos
 import { calcularBalancete } from './ledger.js';
 
 let chartDespesasInstance = null;
 let chartBalancoInstance = null;
 let chartFluxoInstance = null;
 
-// ==========================================
-// 1. FUNÇÕES AUXILIARES DE FORMATAÇÃO
-// ==========================================
-
-// Formatação Contábil: Negativos viram (R$ X,XX)
 function formatarMoedaContabil(valor) {
   const absVal = Math.abs(valor).toFixed(2).replace('.', ',');
   if (valor < 0) {
@@ -17,81 +13,84 @@ function formatarMoedaContabil(valor) {
   return `R$ ${absVal}`;
 }
 
-// ==========================================
-// 2. RENDERIZAÇÃO DA INTERFACE PRINCIPAL
-// ==========================================
-
 export function renderUI(state) {
   const ex = obterLancamentosExibicao(state);
   const isReadonly = state.livroSelecionadoId !== 'atual';
   
-  // Atualiza Balancete com Regras Contábeis
+  // Calcula Balancete e Indicadores
   const totais = calcularBalancete(ex);
   
-  // Ativos e DRE usam notação contábil para saldos devedores/negativos
+  // Atualiza Cards na Tela Inicial
   document.getElementById('total-assets').textContent = formatarMoedaContabil(totais.assets);
-  
-  // Passivos, Receitas e Despesas são exibidos como módulos positivos simples
   document.getElementById('total-liabilities').textContent = `R$ ${Math.abs(totais.liabilities).toFixed(2).replace('.', ',')}`;
   document.getElementById('total-income').textContent = `R$ ${Math.abs(totais.income).toFixed(2).replace('.', ',')}`;
   document.getElementById('total-expenses').textContent = `R$ ${Math.abs(totais.expenses).toFixed(2).replace('.', ',')}`;
   
-  // Card do DRE (Resultado Líquido)
   const dreEl = document.getElementById('total-dre');
   dreEl.textContent = formatarMoedaContabil(totais.dre);
   dreEl.style.color = totais.dre >= 0 ? '#10b981' : '#ef4444';
 
-  // Atualiza Formulário conforme Trava
+  // Atualiza Trava de Leitura
   const formBox = document.getElementById('form-container-box');
   const statusLabel = document.getElementById('label-livro-status');
   if (isReadonly) {
-    formBox.style.opacity = '0.5';
-    formBox.style.pointerEvents = 'none';
-    document.getElementById('form-title').innerHTML = `<i class="fas fa-lock" style="color:#ef4444;"></i> Modo de Leitura`;
-    statusLabel.innerHTML = `<span class="badge-pending" style="background:#fee2e2; color:#991b1b;">MODO DE LEITURA</span>`;
+    if (formBox) {
+      formBox.style.opacity = '0.5';
+      formBox.style.pointerEvents = 'none';
+    }
+    if (document.getElementById('form-title')) {
+      document.getElementById('form-title').innerHTML = `<i class="fas fa-lock" style="color:#ef4444;"></i> Modo de Leitura`;
+    }
+    if (statusLabel) {
+      statusLabel.innerHTML = `<span class="badge-pending" style="background:#fee2e2; color:#991b1b;">MODO DE LEITURA</span>`;
+    }
   } else {
-    formBox.style.opacity = '1';
-    formBox.style.pointerEvents = 'all';
-    document.getElementById('form-title').innerHTML = `<i class="fas fa-plus-circle"></i> Novo Lançamento Contábil`;
-    statusLabel.innerHTML = `<span class="badge-reconciled">EM ABERTO</span>`;
+    if (formBox) {
+      formBox.style.opacity = '1';
+      formBox.style.pointerEvents = 'all';
+    }
+    if (document.getElementById('form-title')) {
+      document.getElementById('form-title').innerHTML = `<i class="fas fa-plus-circle"></i> Novo Lançamento Contábil`;
+    }
+    if (statusLabel) {
+      statusLabel.innerHTML = `<span class="badge-reconciled">EM ABERTO</span>`;
+    }
   }
 
-  // Renderiza Tabela
+  // Tabela de Lançamentos
   const tbody = document.getElementById('tabela-corpo');
-  tbody.innerHTML = '';
-  ex.forEach(l => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${l.data}</td>
-      <td>${l.descricao}</td>
-      <td><span style="background:#fee2e2; color:#991b1b; padding:3px 6px; border-radius:4px; font-size:0.8rem;">${l.origem}</span></td>
-      <td><span style="background:#dcfce7; color:#166534; padding:3px 6px; border-radius:4px; font-size:0.8rem;">${l.destino}</span></td>
-      <td><strong>R$ ${l.valor.toFixed(2).replace('.', ',')}</strong></td>
-      <td>${l.conciliado ? '<span class="badge-reconciled">Conciliado ✓</span>' : '<span class="badge-pending">Pendente</span>'}</td>
-      <td>
-        ${!isReadonly ? `<button data-action="editar" data-id="${l.id}" style="background:#3b82f6; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;"><i class="fas fa-edit"></i></button>` : ''}
-        ${!isReadonly ? `<button data-action="excluir" data-id="${l.id}" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;"><i class="fas fa-trash"></i></button>` : ''}
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+  if (tbody) {
+    tbody.innerHTML = '';
+    ex.forEach(l => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${l.data}</td>
+        <td>${l.descricao}</td>
+        <td><span style="background:#fee2e2; color:#991b1b; padding:3px 6px; border-radius:4px; font-size:0.8rem;">${l.origem}</span></td>
+        <td><span style="background:#dcfce7; color:#166534; padding:3px 6px; border-radius:4px; font-size:0.8rem;">${l.destino}</span></td>
+        <td><strong>R$ ${parseFloat(l.valor).toFixed(2).replace('.', ',')}</strong></td>
+        <td>${l.conciliado ? '<span class="badge-reconciled">Conciliado ✓</span>' : '<span class="badge-pending">Pendente</span>'}</td>
+        <td>
+          ${!isReadonly ? `<button data-action="editar" data-id="${l.id}" style="background:#3b82f6; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;"><i class="fas fa-edit"></i></button>` : ''}
+          ${!isReadonly ? `<button data-action="excluir" data-id="${l.id}" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;"><i class="fas fa-trash"></i></button>` : ''}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
 
-  // Atualiza todos os gráficos
+  // Desenha os Gráficos
   renderizarGraficos(ex, totais);
 }
-
-// ==========================================
-// 3. RENDERIZAÇÃO DOS GRÁFICOS (CHART.JS)
-// ==========================================
 
 export function renderizarGraficos(lancamentosExibicao, totais) {
   if (typeof Chart === 'undefined') return;
 
-  // --- Gráfico 1: Distribuição de Despesas ---
+  // 1. Gráfico de Rosca (Despesas)
   const catDespesas = {};
   lancamentosExibicao.forEach(l => {
     if (l.destino.startsWith('Despesas')) {
-      catDespesas[l.destino] = (catDespesas[l.destino] || 0) + l.valor;
+      catDespesas[l.destino] = (catDespesas[l.destino] || 0) + parseFloat(l.valor);
     }
   });
 
@@ -111,7 +110,7 @@ export function renderizarGraficos(lancamentosExibicao, totais) {
     });
   }
 
-  // --- Gráfico 2: Balanço Patrimonial ---
+  // 2. Gráfico Balanço Patrimonial
   const canvasBalanco = document.getElementById('chartBalanco');
   if (canvasBalanco) {
     if (chartBalancoInstance) chartBalancoInstance.destroy();
@@ -129,19 +128,21 @@ export function renderizarGraficos(lancamentosExibicao, totais) {
     });
   }
 
-  // --- Gráfico 3: Projeção de Fluxo de Caixa Diário ---
+  // 3. Gráfico de Fluxo de Caixa Diário (CORRIGIDO)
   const agrupadoPorDia = {};
+  
   lancamentosExibicao.forEach(l => {
-    const dia = l.data;
+    const dia = l.data; 
     if (!agrupadoPorDia[dia]) {
       agrupadoPorDia[dia] = { receita: 0, despesa: 0 };
     }
 
+    const val = parseFloat(l.valor) || 0;
     if (l.origem.startsWith('Receitas')) {
-      agrupadoPorDia[dia].receita += l.valor;
+      agrupadoPorDia[dia].receita += val;
     }
     if (l.destino.startsWith('Despesas')) {
-      agrupadoPorDia[dia].despesa += l.valor;
+      agrupadoPorDia[dia].despesa += val;
     }
   });
 
@@ -190,10 +191,6 @@ export function renderizarGraficos(lancamentosExibicao, totais) {
     });
   }
 }
-
-// ==========================================
-// 4. MÉTODOS AUXILIARES EXPORTADOS
-// ==========================================
 
 export function obterLancamentosExibicao(state) {
   if (state.livroSelecionadoId === 'atual') return state.lancamentos;
