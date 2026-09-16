@@ -156,27 +156,32 @@
         <div id="historico-livros-container"></div>
       </div>
 
-      <!-- ABA 3: GRÁFICOS & DRE -->
-      <div id="tab-graficos" class="tab-content">
-        <h2><i class="fas fa-chart-pie"></i> Demonstrações e Gráficos Gerenciais</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 1.5rem;">
-          <div style="background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <h4>Distribuição de Despesas</h4>
-            <canvas id="chartDespesas"></canvas>
-          </div>
-          <div style="background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <h4>Balanço Patrimonial</h4>
-            <canvas id="chartBalanco"></canvas>
-          </div>
-        </div>
-      </div>
+     <!-- ABA 3: GRÁFICOS & DRE -->
+<div id="tab-graficos" class="tab-content">
+  <h2><i class="fas fa-chart-pie"></i> Demonstrações e Gráficos Gerenciais</h2>
+  
+  <!-- GRID LADO A LADO: Distribuição e Balanço -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 1.5rem;">
+    
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+      <h4>Distribuição de Despesas</h4>
+      <canvas id="chartDespesas"></canvas>
+    </div>
 
-      <div id="tab-investimentos" class="tab-content"><h2><i class="fas fa-coins"></i> Carteira de Investimentos</h2></div>
-      <div id="tab-taxas" class="tab-content"><h2><i class="fas fa-percentage"></i> Calculadora de Taxas e Juros</h2></div>
-      <div id="tab-compras" class="tab-content"><h2><i class="fas fa-shopping-cart"></i> Controle de Compras</h2></div>
-    </main>
+    <div style="background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+      <h4>Balanço Patrimonial</h4>
+      <canvas id="chartBalanco"></canvas>
+    </div>
+
+  </div> <!-- FIM DO GRID LADO A LADO -->
+
+  <!-- BLOCO DE LARGURA TOTAL: Projeção de Fluxo de Caixa (Fora do Grid) -->
+  <div style="background: #ffffff; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 1.5rem;">
+    <h3 style="color: #1e293b; margin-bottom: 1rem;"><i class="fas fa-chart-line"></i> Projeção de Fluxo de Caixa Diário</h3>
+    <canvas id="chartFluxoCaixa" style="max-height: 350px; width: 100%;"></canvas>
   </div>
 
+</div>
   <!-- MODAL: RELATÓRIO DO LIVRO FISCAL -->
   <div id="modal-relatorio-livro" class="modal">
     <div class="modal-content">
