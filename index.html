@@ -127,6 +127,17 @@
               </div>
             </div>
             <div style="margin-top: 1.25rem; display: flex; gap: 10px;">
+                 <!-- CAMPO DE TAGS / CENTRO DE CUSTO (Adicionar no Formulário) -->
+<div style="display: flex; flex-direction: column; gap: 4px;">
+  <label style="font-size: 0.85rem; font-weight: bold; color: #475569;">Centro de Custo / Tag</label>
+  <select id="lancamento-tag" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;">
+    <option value="Operacional">#Operacional</option>
+    <option value="Fixa">#Custo Fixos</option>
+    <option value="Variavel">#Custo Variável</option>
+    <option value="Pessoal">#Pessoal</option>
+    <option value="Investimentos">#Investimentos</option>
+  </select>
+</div>
               <button type="submit" id="btn-submit-form" class="btn-primary"><i class="fas fa-save"></i> Registrar Partida Dobrada</button>
               <button type="button" id="btn-cancel-edit" class="btn-primary" style="background:#64748b; display:none;" onclick="cancelarEdicao()">Cancelar Edição</button>
             </div>
@@ -148,17 +159,7 @@
           <tbody id="tabela-corpo"></tbody>
         </table>
       </div>
-          <!-- CAMPO DE TAGS / CENTRO DE CUSTO (Adicionar no Formulário) -->
-<div style="display: flex; flex-direction: column; gap: 4px;">
-  <label style="font-size: 0.85rem; font-weight: bold; color: #475569;">Centro de Custo / Tag</label>
-  <select id="lancamento-tag" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;">
-    <option value="Operacional">#Operacional</option>
-    <option value="Fixa">#Custo Fixos</option>
-    <option value="Variavel">#Custo Variável</option>
-    <option value="Pessoal">#Pessoal</option>
-    <option value="Investimentos">#Investimentos</option>
-  </select>
-</div>
+         
 
       <!-- ABA 2: HISTÓRICO DE LIVROS FISCAIS -->
       <div id="tab-livros" class="tab-content">
