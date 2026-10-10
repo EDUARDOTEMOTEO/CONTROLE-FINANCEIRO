@@ -679,7 +679,7 @@
       const dadosExibicao = obterLancamentosExibicao();
       const categorias = {};
       const categoriasTags = {}; 
-      const fluxoCaixa = {}; 
+      const fluxoCaixaDiario = {}; // Para guardar o que aconteceu em cada dia
       let totalAssets = 0, totalLiabilities = 0;
 
       dadosExibicao.forEach(l => {
@@ -693,12 +693,18 @@
            categoriasTags[l.tag] = (categoriasTags[l.tag] || 0) + l.valor;
         }
 
-        // Fluxo de Caixa
-        if (!fluxoCaixa[l.data]) {
-            fluxoCaixa[l.data] = { receitas: 0, despesas: 0 };
+        // Prepara dados brutos para o Fluxo de Caixa (Entradas e Saídas do dia)
+        if (!fluxoCaixaDiario[l.data]) {
+            fluxoCaixaDiario[l.data] = { receitas: 0, despesas: 0 };
         }
-        if (l.origem.startsWith('Receitas')) fluxoCaixa[l.data].receitas += l.valor;
-        if (l.destino.startsWith('Despesas')) fluxoCaixa[l.data].despesas += l.valor;
+        if (l.origem.startsWith('Receitas') || l.destino.startsWith('Ativos')) {
+            // Conta como entrada no caixa se for receita ou se o dinheiro foi para um Ativo(Caixa/Banco)
+            if(l.origem.startsWith('Receitas')) fluxoCaixaDiario[l.data].receitas += l.valor;
+        }
+        if (l.destino.startsWith('Despesas') || l.origem.startsWith('Ativos')) {
+            // Conta como saída se for despesa paga com um Ativo
+            if(l.destino.startsWith('Despesas')) fluxoCaixaDiario[l.data].despesas += l.valor;
+        }
 
         // Balanço
         if (l.destino.startsWith('Ativos')) totalAssets += l.valor;
@@ -742,6 +748,64 @@
           datasets: [{ data: Object.keys(categoriasTags).length > 0 ? Object.values(categoriasTags) : [1], backgroundColor: ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'] }]
         }
       });
+
+      // 4. Gráfico de Saldo Acumulado (O Fluxo de Caixa Real)
+      const datasOrdenadas = Object.keys(fluxoCaixaDiario).sort();
+      let saldoAcumulado = 0;
+      const saldosProjetados = [];
+
+      // Calcula o saldo dia após dia
+      datasOrdenadas.forEach(data => {
+          const saldoDoDia = fluxoCaixaDiario[data].receitas - fluxoCaixaDiario[data].despesas;
+          saldoAcumulado += saldoDoDia;
+          saldosProjetados.push(saldoAcumulado);
+      });
+      
+      const ctx4 = document.getElementById('chartFluxoCaixa').getContext('2d');
+      chartFluxoCaixaInstance = new Chart(ctx4, {
+        type: 'line',
+        data: {
+          labels: datasOrdenadas.length > 0 ? datasOrdenadas : ['Sem dados'],
+          datasets: [
+            { 
+              label: 'Saldo Acumulado em Caixa (R$)', 
+              data: saldosProjetados, 
+              borderColor: '#3b82f6', // Azul principal
+              backgroundColor: 'rgba(59, 130, 246, 0.1)', 
+              fill: true, 
+              tension: 0.3,
+              pointBackgroundColor: saldosProjetados.map(valor => valor < 0 ? '#ef4444' : '#10b981'), // Ponto fica vermelho se negativo
+              segment: {
+                borderColor: ctx => ctx.p1.parsed.y < 0 ? '#ef4444' : '#3b82f6' // A linha fica vermelha quando desce do zero
+              }
+            }
+          ]
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          plugins: {
+              tooltip: {
+                  callbacks: {
+                      label: function(context) {
+                          let label = context.dataset.label || '';
+                          if (label) { label += ': '; }
+                          if (context.parsed.y !== null) {
+                              label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                          }
+                          return label;
+                      }
+                  }
+              }
+          },
+          scales: {
+            y: {
+              grid: { color: (context) => context.tick.value === 0 ? '#000000' : '#e5e7eb', lineWidth: (context) => context.tick.value === 0 ? 2 : 1 } // Deixa a linha do Zero mais escura
+            }
+          }
+        }
+      });
+    }
 
       // 4. Gráfico de Fluxo de Caixa (Linha do Tempo)
       const datasOrdenadas = Object.keys(fluxoCaixa).sort();
