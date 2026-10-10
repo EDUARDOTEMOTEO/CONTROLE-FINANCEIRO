@@ -104,7 +104,7 @@
           <h3 id="form-title"><i class="fas fa-plus-circle"></i> Novo Lançamento Contábil</h3>
           <form id="ledger-form" onsubmit="salvarLancamento(event)">
             <input type="hidden" id="edit-id" value="">
-            <div class="form-grid">
+           <div class="form-grid">
               <div class="form-group">
                 <label>Data</label>
                 <input type="date" id="data" required>
@@ -125,18 +125,18 @@
                 <label>Conta Destino (Débito)</label>
                 <select id="conta-destino" required></select>
               </div>    
+              <!-- CAMPO DE TAGS NO LUGAR CORRETO -->
+              <div class="form-group">
+                <label>Centro de Custo / Tag</label>
+                <select id="lancamento-tag" required>
+                  <option value="Operacional">#Operacional</option>
+                  <option value="Fixa">#Custo Fixos</option>
+                  <option value="Variavel">#Custo Variável</option>
+                  <option value="Pessoal">#Pessoal</option>
+                  <option value="Investimentos">#Investimentos</option>
+                </select>
+              </div>
             </div>
-              <!-- CAMPO DE TAGS / CENTRO DE CUSTO (Adicionar no Formulário) -->
-<div style="display: flex; flex-direction: column; gap: 4px;">
-  <label style="font-size: 0.85rem; font-weight: bold; color: #475569;">Centro de Custo / Tag</label>
-  <select id="lancamento-tag" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;">
-    <option value="Operacional">#Operacional</option>
-    <option value="Fixa">#Custo Fixos</option>
-    <option value="Variavel">#Custo Variável</option>
-    <option value="Pessoal">#Pessoal</option>
-    <option value="Investimentos">#Investimentos</option>
-  </select>
-</div>
             <div style="margin-top: 1.25rem; display: flex; gap: 10px;">
               
               <button type="submit" id="btn-submit-form" class="btn-primary"><i class="fas fa-save"></i> Registrar Partida Dobrada</button>
