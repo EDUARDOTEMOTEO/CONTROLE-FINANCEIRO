@@ -320,6 +320,8 @@
 
     let chartDespesasInstance = null;
     let chartBalancoInstance = null;
+    let chartTagsInstance = null;
+    let chartFluxoCaixaInstance = null;
 
     // Inicialização ao carregar a página
     window.addEventListener('DOMContentLoaded', () => {
@@ -402,6 +404,7 @@
 
       const orig = document.getElementById('conta-origem').value;
       const dest = document.getElementById('conta-destino').value;
+      const tag = document.getElementById('lancamento-tag').value; // Pegando a Tag
 
       if (orig === dest) {
         alert("Erro Contábil: A conta de Origem e Destino não podem ser a mesma!");
@@ -418,6 +421,7 @@
           item.valor = parseFloat(document.getElementById('valor').value);
           item.origem = orig;
           item.destino = dest;
+          item.tag = tag; // Salvando a edição
         }
       } else {
         const novo = {
@@ -427,6 +431,7 @@
           valor: parseFloat(document.getElementById('valor').value),
           origem: orig,
           destino: dest,
+          tag: tag, // Salvando novo
           conciliado: false,
           conciliadoCom: null
         };
@@ -448,6 +453,7 @@
       document.getElementById('valor').value = item.valor;
       document.getElementById('conta-origem').value = item.origem;
       document.getElementById('conta-destino').value = item.destino;
+      document.getElementById('lancamento-tag').value = item.tag || 'Operacional'; // Carrega a Tag
 
       document.getElementById('btn-submit-form').innerHTML = `<i class="fas fa-check"></i> Atualizar Lançamento`;
       document.getElementById('btn-cancel-edit').style.display = 'inline-block';
@@ -672,21 +678,42 @@
     function renderizarGraficos() {
       const dadosExibicao = obterLancamentosExibicao();
       const categorias = {};
+      const categoriasTags = {}; 
+      const fluxoCaixa = {}; 
       let totalAssets = 0, totalLiabilities = 0;
 
       dadosExibicao.forEach(l => {
+        // Grafico de Despesas
         if (l.destino.startsWith('Despesas')) {
           categorias[l.destino] = (categorias[l.destino] || 0) + l.valor;
         }
+        
+        // Grafico de Tags
+        if (l.tag) {
+           categoriasTags[l.tag] = (categoriasTags[l.tag] || 0) + l.valor;
+        }
+
+        // Fluxo de Caixa
+        if (!fluxoCaixa[l.data]) {
+            fluxoCaixa[l.data] = { receitas: 0, despesas: 0 };
+        }
+        if (l.origem.startsWith('Receitas')) fluxoCaixa[l.data].receitas += l.valor;
+        if (l.destino.startsWith('Despesas')) fluxoCaixa[l.data].despesas += l.valor;
+
+        // Balanço
         if (l.destino.startsWith('Ativos')) totalAssets += l.valor;
         if (l.origem.startsWith('Ativos')) totalAssets -= l.valor;
         if (l.destino.startsWith('Passivos')) totalLiabilities -= l.valor;
         if (l.origem.startsWith('Passivos')) totalLiabilities += l.valor;
       });
 
+      // Limpa gráficos antigos antes de desenhar
       if (chartDespesasInstance) chartDespesasInstance.destroy();
       if (chartBalancoInstance) chartBalancoInstance.destroy();
+      if (chartTagsInstance) chartTagsInstance.destroy(); 
+      if (chartFluxoCaixaInstance) chartFluxoCaixaInstance.destroy(); 
 
+      // 1. Gráfico de Despesas
       const ctx1 = document.getElementById('chartDespesas').getContext('2d');
       chartDespesasInstance = new Chart(ctx1, {
         type: 'doughnut',
@@ -696,6 +723,7 @@
         }
       });
 
+      // 2. Gráfico de Balanço
       const ctx2 = document.getElementById('chartBalanco').getContext('2d');
       chartBalancoInstance = new Chart(ctx2, {
         type: 'bar',
@@ -704,8 +732,35 @@
           datasets: [{ label: 'Valor (R$)', data: [totalAssets, totalLiabilities], backgroundColor: ['#10b981', '#ef4444'] }]
         }
       });
-    }
 
+      // 3. Gráfico de Tags
+      const ctx3 = document.getElementById('chartTags').getContext('2d');
+      chartTagsInstance = new Chart(ctx3, {
+        type: 'pie',
+        data: {
+          labels: Object.keys(categoriasTags).length > 0 ? Object.keys(categoriasTags) : ['Sem dados'],
+          datasets: [{ data: Object.keys(categoriasTags).length > 0 ? Object.values(categoriasTags) : [1], backgroundColor: ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'] }]
+        }
+      });
+
+      // 4. Gráfico de Fluxo de Caixa (Linha do Tempo)
+      const datasOrdenadas = Object.keys(fluxoCaixa).sort();
+      const receitasData = datasOrdenadas.map(d => fluxoCaixa[d].receitas);
+      const despesasData = datasOrdenadas.map(d => fluxoCaixa[d].despesas);
+      
+      const ctx4 = document.getElementById('chartFluxoCaixa').getContext('2d');
+      chartFluxoCaixaInstance = new Chart(ctx4, {
+        type: 'line',
+        data: {
+          labels: datasOrdenadas.length > 0 ? datasOrdenadas : ['Sem dados'],
+          datasets: [
+            { label: 'Receitas (Entradas)', data: receitasData, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3 },
+            { label: 'Despesas (Saídas)', data: despesasData, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.3 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
     function abrirModalConciliacao() {
       if (verificarTravaEdicao()) return;
       const selectSaida = document.getElementById('concil-saida');
